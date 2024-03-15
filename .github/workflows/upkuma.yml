@@ -1,0 +1,33 @@
+name: Uptime Kuma Image CI
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - '.github/workflows/upkuma.yml'
+    - 'upkuma/**'
+  schedule:
+  - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: "{{defaultContext}}:upkuma"
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/upkuma:latest

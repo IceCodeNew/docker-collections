@@ -1,0 +1,41 @@
+name: Derp Image CI
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - '.github/workflows/derp.yml'
+  schedule:
+  - cron: "40 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'tailscale/tailscale'
+          ref: 'main'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          check-latest: true
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: ko-build/setup-ko@v0.6
+        env:
+          KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/derper
+      - run: ko build --bare ./cmd/derper
+
+      - uses: ko-build/setup-ko@v0.6
+        env:
+          KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/derpprobe
+      - run: ko build --bare ./cmd/derpprobe
