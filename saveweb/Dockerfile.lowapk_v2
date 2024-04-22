@@ -19,7 +19,7 @@ RUN source /home/nonroot/.cargo/env \
     && uv venv \
     && source /home/nonroot/.venv/bin/activate \
     && uv pip --no-cache-dir install --upgrade \
-        https://static.saveweb.org/lowapk_v2-2.0.2-py3-none-any.whl
+        https://static.saveweb.org/lowapk_v2-2.0.3-py3-none-any.whl
 
 RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
     && echo 'source /home/nonroot/.venv/bin/activate' >> /home/nonroot/.bashrc \
