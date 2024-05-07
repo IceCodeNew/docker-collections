@@ -33,9 +33,9 @@ jobs:
       - uses: ko-build/setup-ko@v0.6
         env:
           KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/derper
-      - run: ko build --bare ./cmd/derper
+      - run: ko build --platform=linux/amd64,linux/arm64 --bare ./cmd/derper
 
       - uses: ko-build/setup-ko@v0.6
         env:
           KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/derpprobe
-      - run: ko build --bare ./cmd/derpprobe
+      - run: ko build --platform=linux/amd64,linux/arm64 --bare ./cmd/derpprobe

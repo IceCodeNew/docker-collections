@@ -11,10 +11,22 @@ on:
   - cron: "0 2 * * *"
   workflow_dispatch:
 
+env:
+  REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/upkuma
+
 jobs:
-  docker:
+  images:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
     steps:
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -25,9 +37,62 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and push
+        name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: "{{defaultContext}}:upkuma"
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/upkuma:latest
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+      -
+        name: Export digest
+        run: |
+          mkdir -p /tmp/upkuma-digests/
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/upkuma-digests/${digest#sha256:}"          
+
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      -
+        name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: upkuma-digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/upkuma-digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  multiarch:
+    runs-on: ubuntu-latest
+    needs:
+      - images
+    steps:
+      -
+        name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/upkuma-digests/
+          pattern: upkuma-digests-*
+          merge-multiple: true
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Create manifest list and push
+        working-directory: /tmp/upkuma-digests/
+        run: |
+          docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:latest \
+              $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+      -
+        name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:latest
