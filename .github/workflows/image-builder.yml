@@ -2,8 +2,6 @@ name: Image Builder
 
 on:
   push:
-    branches:
-    - 'release'
     paths:
     - '.github/workflows/image-builder.yml'
     - 'image-builder/**'
