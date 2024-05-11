@@ -1,12 +1,9 @@
 name: Image Builder
 
 on:
-  pull_request:
-    types: [opened, reopened]
-    paths:
-    - '.github/workflows/image-builder.yml'
-    - 'image-builder/**'
   push:
+    branches:
+    - 'release'
     paths:
     - '.github/workflows/image-builder.yml'
     - 'image-builder/**'
@@ -19,6 +16,14 @@ env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/image-builder
 
 jobs:
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - shell: bash
+        run: |
+          echo 'The triggering workflow failed'
+          exit 0
   on-success:
     runs-on: ubuntu-latest
     strategy:
@@ -27,6 +32,7 @@ jobs:
         targets:
           - aws-lc
           - modern-toolbox-fedora
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - run: echo 'The triggering workflow passed'
       -
