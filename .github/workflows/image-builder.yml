@@ -1,7 +1,14 @@
 name: Image Builder
 
 on:
+  pull_request:
+    types: [opened, reopened]
+    paths:
+    - '.github/workflows/image-builder.yml'
+    - 'image-builder/**'
   push:
+    branches:
+    - release
     paths:
     - '.github/workflows/image-builder.yml'
     - 'image-builder/**'
