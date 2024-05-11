@@ -1,0 +1,73 @@
+name: Auto Update Variables
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - '.github/workflows/auto-update-vars.yml'
+    - 'image-builder/**'
+  schedule:
+  - cron: "0 1 * * *"
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "Bump"
+  Bump:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set some variables
+        shell: bash
+        run: |
+          set -x
+          GITHUB_API_BASEURL='https://api.github.com'
+          TMP_FILE=$(mktemp)
+          if curl -sS -i -I -H "Accept: application/vnd.github.v3+json" -o "$TMP_FILE" -- 'https://github-cache.yingmale.win/api/'; then
+              HTTP_STATUS_CODE=$(awk 'NR==1 {print $2}' "$TMP_FILE")
+              if [[ $HTTP_STATUS_CODE -ge 200 ]] && [[ $HTTP_STATUS_CODE -le 299 ]]; then
+                  GITHUB_API_BASEURL='https://github-cache.yingmale.win/api'
+                  echo "info: github cache is ready, will use ${GITHUB_API_BASEURL} as GITHUB_API_BASEURL."
+              fi
+          fi
+          "rm" -f "$TMP_FILE"
+          export GITHUB_API_BASEURL
+
+          mold_latest_tag_name=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
+              "${GITHUB_API_BASEURL}/repos/rui314/mold/releases/latest" \
+              | grep -F 'tag_name' | cut -d'"' -f4)
+
+          echo "mold_latest_tag_name=${mold_latest_tag_name}" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=$(TZ=':Asia/Taipei' date +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
+          echo "image_build_date=$(TZ=':Asia/Taipei' date +%F)" >> "$GITHUB_ENV"
+          set +x
+      # Runs a set of commands using the runners shell
+      - name: Force push `release` branch
+        shell: bash
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout release
+          git reset --hard origin/master
+
+          cd ./image-builder/ || exit 1
+          _files=(
+              aws-lc.Dockerfile
+              modern-toolbox-fedora.Dockerfile
+          )
+          export _files
+          sed -i -E "s/^ARG mold_latest_tag_name=.+/ARG mold_latest_tag_name=${mold_latest_tag_name:?empty value}/" \
+              "${_files[@]}"
+          sed -i -E "s/^ARG image_build_date=.+/ARG image_build_date=${image_build_date:?empty value}/" \
+              "${_files[@]}"
+
+          git add "${_files[@]}"
+          git commit -m "${{ env.RELEASE_NAME }}"
+          git push -f -u origin release
