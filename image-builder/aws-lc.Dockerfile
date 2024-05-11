@@ -54,10 +54,8 @@ RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules 
 ENV CC=clang \
     CXX=clang++ \
     LDFLAGS="-fuse-ld=mold"
-# ENV CFLAGS='-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong' \
-#     CXXFLAGS='-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong'
-# ENV PKG_CONFIG_ALL_STATIC=true \
-#     PKG_CONFIG="pkgconf --static"
+ENV CFLAGS='-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong' \
+    CXXFLAGS='-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong'
 ENV CGO_ENABLED=0
 WORKDIR /aws-lc-build/
 RUN cmake -GNinja \
