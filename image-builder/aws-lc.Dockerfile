@@ -64,7 +64,8 @@ RUN cmake -GNinja \
         -DBUILD_SHARED_LIBS=OFF \
         -DFIPS=OFF \
         /go/src/${REPOPATH}/ \
-    && ninja install
+    && ninja install \
+    && strip /aws-lc-install/bin/bssl
 
 
 FROM scratch
