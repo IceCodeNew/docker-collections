@@ -13,7 +13,7 @@ RUN apk update \
 USER nonroot:nonroot
 WORKDIR /home/nonroot/
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ARG chouti_url="https://git.saveweb.org/api/packages/saveweb/pypi/files/chouti/1.0.3/chouti-1.0.3-py3-none-any.whl#sha256-88f4b4555bc6d4a73b33db1d77548277868db26d41a5981454fd0209164d803e"
+ARG chouti_url="https://git.saveweb.org/api/packages/saveweb/pypi/files/chouti/1.2.0/chouti-1.2.0-py3-none-any.whl#sha256-b26f0d7b4d7baf6aa5e26108e2d7507db42e029afca7cb611febeed9c82b6769"
 RUN source /home/nonroot/.cargo/env \
     && uv venv \
     && source /home/nonroot/.venv/bin/activate \
