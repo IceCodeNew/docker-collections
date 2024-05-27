@@ -5,6 +5,7 @@ RUN go env -w GOFLAGS="$GOFLAGS -buildmode=pie" \
     && go env -w GOAMD64=v2 \
     && xcaddy build \
     --with github.com/caddy-dns/cloudflare@master \
+    --with github.com/mholt/caddy-l4@master \
     --output "/usr/bin/caddy"
 
 FROM docker.io/library/caddy:latest  AS caddy
