@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:bullseye AS base
+FROM golang:bookworm AS base
 ARG DEBIAN_FRONTEND=noninteractive
 ARG image_build_date='2024-05-11'
 # http://bugs.python.org/issue19846
@@ -13,13 +13,13 @@ RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && echo 'force-unsafe-io' > '/etc/dpkg/dpkg.cfg.d/docker-apt-speedup' \
     && echo 'Acquire::Languages "none";' > '/etc/apt/apt.conf.d/docker-no-languages' \
     && echo -e 'Acquire::GzipIndexes "true";\nAcquire::CompressionTypes::Order:: "gz";' > '/etc/apt/apt.conf.d/docker-gzip-indexes' \
-    && apt-get update -qq && apt-get full-upgrade -y \
+    && apt-get update && apt-get full-upgrade -y \
     && apt-get -y install \
         ca-certificates curl gpg gpg-agent \
     && curl -sSL 'https://apt.llvm.org/llvm-snapshot.gpg.key' > /etc/apt/trusted.gpg.d/apt.llvm.org.asc \
-    && echo 'deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main' > /etc/apt/sources.list.d/llvm.list \
-    && echo 'deb http://deb.debian.org/debian bullseye-backports main' > /etc/apt/sources.list.d/backports.list \
-    && apt-get update -qq \
+    && echo 'deb http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm main' > /etc/apt/sources.list.d/llvm.list \
+    && echo 'deb http://deb.debian.org/debian bookworm-backports main' > /etc/apt/sources.list.d/backports.list \
+    && apt-get update \
     && apt-get -y install \
         binutils build-essential coreutils dos2unix file git libarchive-tools netbase pkgconf util-linux \
         clang \
