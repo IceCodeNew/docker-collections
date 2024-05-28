@@ -6,6 +6,8 @@ on:
     - 'master'
     paths:
     - '.github/workflows/auto-update-vars.yml'
+    - '.github/workflows/haproxy.yml'
+    - '.github/workflows/image-builder.yml'
     - 'image-builder/**'
   schedule:
   - cron: "0 1 * * *"
@@ -40,10 +42,14 @@ jobs:
           "rm" -f "$TMP_FILE"
           export GITHUB_API_BASEURL
 
+          lua_version=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
+              "https://www.lua.org/download.html" \
+              | tr -d '\r\n\t' | grep -Po '(?<=lua-)[0-9]\.[0-9]\.[0-9](?=\.tar\.gz)' | sort -Vr | head -n 1)
           mold_latest_tag_name=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
               "${GITHUB_API_BASEURL}/repos/rui314/mold/releases/latest" \
               | grep -F 'tag_name' | cut -d'"' -f4)
 
+          echo "lua_version=${lua_version}" >> "$GITHUB_ENV"
           echo "mold_latest_tag_name=${mold_latest_tag_name}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=$(TZ=':Asia/Taipei' date +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
           echo "image_build_date=$(TZ=':Asia/Taipei' date +%F)" >> "$GITHUB_ENV"
@@ -57,16 +63,18 @@ jobs:
           git checkout release
           git reset --hard origin/master
 
-          cd ./image-builder/ || exit 1
           _files=(
-              alpine.Dockerfile
-              aws-lc.Dockerfile
-              modern-toolbox-fedora.Dockerfile
+              ./image-builder/alpine.Dockerfile
+              ./image-builder/aws-lc.Dockerfile
+              ./image-builder/endlessh.Dockerfile
+              ./image-builder/modern-toolbox-fedora.Dockerfile
+              ./haproxy/Dockerfile
           )
           export _files
-          sed -i -E "s/^ARG mold_latest_tag_name=.+/ARG mold_latest_tag_name=${mold_latest_tag_name:?empty value}/" \
-              "${_files[@]}"
-          sed -i -E "s/^ARG image_build_date=.+/ARG image_build_date=${image_build_date:?empty value}/" \
+          sed -i -E \
+              -e "s/^ARG lua_version=.+/ARG lua_version=${lua_version:?empty value}/" \
+              -e "s/^ARG mold_latest_tag_name=.+/ARG mold_latest_tag_name=${mold_latest_tag_name:?empty value}/" \
+              -e "s/^ARG image_build_date=.+/ARG image_build_date=${image_build_date:?empty value}/" \
               "${_files[@]}"
 
           git add "${_files[@]}"
