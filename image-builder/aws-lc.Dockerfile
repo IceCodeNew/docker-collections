@@ -13,22 +13,28 @@ RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && echo 'force-unsafe-io' > '/etc/dpkg/dpkg.cfg.d/docker-apt-speedup' \
     && echo 'Acquire::Languages "none";' > '/etc/apt/apt.conf.d/docker-no-languages' \
     && echo -e 'Acquire::GzipIndexes "true";\nAcquire::CompressionTypes::Order:: "gz";' > '/etc/apt/apt.conf.d/docker-gzip-indexes' \
-    && apt-get update && apt-get full-upgrade -y \
+    && apt-get update \
     && apt-get -y install \
         ca-certificates curl gpg gpg-agent \
+        grep \
+    && curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; } \
+    && curl -sSL 'https://apt.llvm.org/llvm.sh' | grep -F 'CURRENT_LLVM_STABLE=' > /tmp/llvm.env \
+    && source /tmp/llvm.env \
     && curl -sSL 'https://apt.llvm.org/llvm-snapshot.gpg.key' > /etc/apt/trusted.gpg.d/apt.llvm.org.asc \
-    && echo 'deb http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm main' > /etc/apt/sources.list.d/llvm.list \
+    && echo "deb http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-${CURRENT_LLVM_STABLE} main" > /etc/apt/sources.list.d/llvm-stable.list \
     && echo 'deb http://deb.debian.org/debian bookworm-backports main' > /etc/apt/sources.list.d/backports.list \
     && apt-get update \
     && apt-get -y install \
         binutils build-essential coreutils dos2unix file git libarchive-tools netbase pkgconf util-linux \
-        clang \
+        clang-${CURRENT_LLVM_STABLE} \
         cmake ninja-build \
         perl \
     && apt-get -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false purge \
+    && apt-get full-upgrade -y \
     && apt-get clean \
     && rm -rf /var/cache/apt/* \
     && rm -rf /var/lib/apt/lists/* \
+    && rm -f /tmp/llvm.env \
     && update-alternatives --install /usr/local/bin/pkg-config pkg-config /usr/bin/pkgconf 100 \
     && update-alternatives --auto pkg-config
 
