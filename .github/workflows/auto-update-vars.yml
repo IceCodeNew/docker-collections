@@ -59,6 +59,7 @@ jobs:
 
           cd ./image-builder/ || exit 1
           _files=(
+              alpine.Dockerfile
               aws-lc.Dockerfile
               modern-toolbox-fedora.Dockerfile
           )
