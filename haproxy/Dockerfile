@@ -17,7 +17,7 @@ RUN apk update \
         pcre2-dev \
     && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/*
-COPY --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /usr/local/
+COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /usr/local/
 
 
 FROM step0_prepare AS step1_lua54
@@ -65,16 +65,32 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM haproxy:2.9-alpine
+FROM haproxy:2.9-alpine AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \
         tzdata \
     && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/*
-ENV TZ=Asia/Taipei
 
-COPY --from=haproxy --chmod=755 /haproxy /usr/local/sbin/
+COPY --link --from=haproxy --chmod=755 /haproxy /usr/local/sbin/
 USER haproxy
 # smoke test
 RUN /usr/local/sbin/haproxy -vv
+
+
+FROM scratch
+COPY --link --from=assets / /
+
+ENV TZ=Asia/Taipei
+
+STOPSIGNAL SIGUSR1
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+USER haproxy
+
+# https://github.com/docker-library/haproxy/issues/200
+WORKDIR /var/lib/haproxy
+
+CMD ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]

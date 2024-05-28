@@ -13,7 +13,10 @@ RUN apk update; apk --no-progress --no-cache add \
         tzdata; \
     apk --no-progress --no-cache upgrade; \
     rm -rf /var/cache/apk/*;
-COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+COPY --link --from=builder --chmod=755 /usr/bin/caddy /usr/bin/
+RUN /usr/bin/caddy version \
+    && /usr/bin/caddy list-modules \
+    && /usr/bin/caddy build-info
 
 
 # strip off the published ports

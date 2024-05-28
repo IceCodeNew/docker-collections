@@ -49,9 +49,9 @@ RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
 
 
 FROM scratch
-COPY --link --from=builder         /  /
-COPY --link --from=graftcp-builder /usr/local/bin/graftcp /usr/local/bin/graftcp-local /usr/local/bin/mgraftcp \
-                                   /usr/local/bin/
+COPY --link --from=builder                     /  /
+COPY --link --from=graftcp-builder --chmod=755 /usr/local/bin/graftcp /usr/local/bin/graftcp-local /usr/local/bin/mgraftcp \
+                                               /usr/local/bin/
 ENV TZ=Asia/Taipei
 ENV UPTIME_KUMA_IS_CONTAINER=1
 

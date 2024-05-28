@@ -28,7 +28,7 @@ RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
 
 
 FROM cgr.dev/chainguard/python:latest
-COPY --from=build /home/nonroot/ /home/nonroot/
+COPY --link --from=build /home/nonroot/ /home/nonroot/
 WORKDIR /home/nonroot/
 
 ENV TZ=Asia/Taipei

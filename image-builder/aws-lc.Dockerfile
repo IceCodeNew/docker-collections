@@ -61,4 +61,4 @@ RUN case "$TARGETARCH" in \
 
 
 FROM scratch
-COPY --from=aws-lc-builder /aws-lc-install/ /aws-lc-install/
+COPY --link --from=aws-lc-builder /aws-lc-install/ /aws-lc-install/

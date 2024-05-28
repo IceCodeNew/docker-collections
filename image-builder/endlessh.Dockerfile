@@ -7,7 +7,7 @@ RUN curl -sSL "https://github.com/skeeto/endlessh/archive/refs/heads/master.tar.
     && strip /endlessh/endlessh
 
 FROM gcr.io/distroless/static:nonroot
-COPY --from=build-env /endlessh/endlessh /usr/local/bin/endlessh
+COPY --link --from=build-env --chmod=755 /endlessh/endlessh /usr/local/bin/
 EXPOSE 2222/tcp
 ENTRYPOINT ["/usr/local/bin/endlessh"]
 CMD ["-v"]
