@@ -35,10 +35,16 @@ RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
 
 FROM base AS golang-builder
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG TARGETARCH
 # https://api.github.com/repos/rui314/mold/releases/latest
 ARG mold_latest_tag_name='v2.31.0'
-RUN curl --retry 5 --retry-delay 10 --retry-max-time 60 -fsSL \
-        "https://github.com/rui314/mold/releases/download/${mold_latest_tag_name}/mold-${mold_latest_tag_name#v}-x86_64-linux.tar.gz" \
+RUN case "$TARGETARCH" in \
+        amd64) export  arch=x86_64;; \
+        arm64) export arch=aarch64;; \
+            *) echo "unsupported architecture"; exit 1 ;; \
+    esac \
+    && curl --retry 5 --retry-delay 10 --retry-max-time 60 -fsSL \
+        "https://github.com/rui314/mold/releases/download/${mold_latest_tag_name}/mold-${mold_latest_tag_name#v}-${arch}-linux.tar.gz" \
         | bsdtar -xf- --strip-components 1 -C /usr \
     && update-alternatives --install /usr/bin/ld ld /usr/bin/ld.mold 100 \
     && update-alternatives --auto ld
