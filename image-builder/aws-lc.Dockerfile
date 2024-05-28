@@ -68,8 +68,17 @@ ENV CFLAGS="-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection 
 ENV PKG_CONFIG_ALL_STATIC=true \
     PKG_CONFIG="pkgconf --static"
 ENV CGO_ENABLED=0
+ARG TARGETARCH
 WORKDIR /aws-lc-build/
-RUN cmake -GNinja \
+RUN case "$TARGETARCH" in \
+        amd64) export protect_branch='-fcf-protection=full';; \
+        arm64) export protect_branch='-mbranch-protection=standard';; \
+            *) echo "unsupported architecture"; exit 1 ;; \
+    esac \
+    &&   CFLAGS="${CFLAGS}   ${protect_branch}" \
+    && CXXFLAGS="${CXXFLAGS} ${protect_branch}" \
+    && export CFLAGS CXXFLAGS \
+    && cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/aws-lc-install \
         -DBUILD_TESTING=OFF \
