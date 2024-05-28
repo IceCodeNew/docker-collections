@@ -19,7 +19,8 @@ ENV PKG_CONFIG=/usr/bin/pkgconf \
 RUN microdnf -y --setopt=install_weak_deps=0 --disablerepo="*" --enablerepo=fedora --enablerepo=updates --best --nodocs install \
     ca-certificates checksec coreutils curl gawk grep perl sed \
     bsdtar parallel \
-    binutils cpp gcc gcc-c++ git-core m4 make patch pkgconf \
+    binutils cpp gcc gcc-c++ git-core m4 make pkgconf \
+    diffutils patch \
     clang mold \
     musl-clang musl-gcc musl-libc-static \
     cmake ninja-build \
