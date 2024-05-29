@@ -26,13 +26,13 @@ RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
                 /home/nonroot/.venv/bin/activate \
                 /home/nonroot/.venv/bin/lowapk_v2;
 
-
-FROM cgr.dev/chainguard/python:latest AS assets
-COPY --from=build --chown=nonroot:nonroot /home/nonroot/ /emptydir/home/nonroot/
+USER root:root
+RUN chown -R nonroot:nonroot /home/nonroot/
 
 
 FROM cgr.dev/chainguard/python:latest
-COPY --link --from=assets /emptydir/home/nonroot/ /home/nonroot/
+# be aware of the ownership of /home/nonroot/
+COPY --link --from=build /home/ /home/
 WORKDIR /home/nonroot/
 
 ENV TZ=Asia/Taipei
