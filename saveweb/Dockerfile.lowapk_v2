@@ -28,10 +28,11 @@ RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
 
 
 FROM cgr.dev/chainguard/python:latest
-COPY --link --from=build /home/nonroot/ /home/nonroot/
+COPY --link --from=build --chown=nonroot:nonroot /home/nonroot/ /home/nonroot/
 WORKDIR /home/nonroot/
 
 ENV TZ=Asia/Taipei
 ENV VIRTUAL_ENV=/home/nonroot/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:/home/nonroot/.cargo/bin:${PATH}"
-ENTRYPOINT [ "python3", "/home/nonroot/.venv/bin/lowapk_v2" ]
+ENTRYPOINT [ "python3" ]
+CMD [ "/home/nonroot/.venv/bin/lowapk_v2" ]
