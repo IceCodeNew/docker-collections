@@ -28,13 +28,13 @@ RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
                 /home/nonroot/.venv/bin/activate \
                 /home/nonroot/.venv/bin/chouti_links;
 
-USER root:root
-RUN chown -R nonroot:nonroot /home/nonroot/ \
-    && ls -halF /home/nonroot
+
+FROM cgr.dev/chainguard/python:latest AS assets
+COPY --from=build --chown=nonroot:nonroot /home/nonroot/ /emptydir/home/nonroot/
 
 
 FROM cgr.dev/chainguard/python:latest
-COPY --link --from=build /home/nonroot/ /home/nonroot/
+COPY --link --from=assets /emptydir/home/nonroot/ /home/nonroot/
 WORKDIR /home/nonroot/
 
 ENV TZ=Asia/Taipei
