@@ -40,12 +40,14 @@ RUN unset -f curl \
     && curl -sSL "https://git.haproxy.org/?p=haproxy-${haproxy_branch}.git;a=snapshot;h=refs/heads/master;sf=tgz" \
         | bsdtar -xf- --strip-components 1 --no-xattrs
 
-ARG TARGETARCH
 ENV PKG_CONFIG_ALL_STATIC=true \
     PKG_CONFIG="pkgconf --static --pure"
+ARG TARGETARCH
 RUN case "$TARGETARCH" in \
-        amd64) export protect_branch='-fcf-protection=full';; \
-        arm64) export protect_branch='-mbranch-protection=standard';; \
+        amd64) export protect_branch="-fcf-protection=full"; \
+               export CPU_CFLAGS="-march=x86-64-v2";; \
+        arm64) export protect_branch="-mbranch-protection=standard"; \
+               export CPU_CFLAGS="-march=armv8.1-a+crypto";; \
             *) echo "unsupported architecture"; exit 1 ;; \
     esac \
     && make -j "$(nproc)" TARGET=linux-musl \
@@ -54,8 +56,11 @@ RUN case "$TARGETARCH" in \
         USE_PROMEX=1 \
         USE_LUA=1 \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
+        CC=clang CXX=clang++ \
+        ARCH_FLAGS="-flto=thin" \
+        OPT_CFLAGS="-O2 -ftree-vectorize" \
+        CPU_CFLAGS="$CPU_CFLAGS" \
         DEFINE="-D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch}" \
-        LDFLAGS='-fuse-ld=mold' \
         V=1 \
     && strip -o /haproxy ./haproxy
 
