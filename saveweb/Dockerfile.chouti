@@ -47,7 +47,8 @@ WORKDIR /home/nonroot/
 ENV TZ=Asia/Taipei
 ENV VIRTUAL_ENV=/home/nonroot/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:/home/nonroot/.cargo/bin:${PATH}"
-ENV LD_PRELOAD=/usr/lib/libmimalloc-secure.so
+ENV LD_PRELOAD=/usr/lib/libmimalloc-secure.so \
+    MIMALLOC_SHOW_STATS=1
 ENV NO_MALLOC_TRIM=true
 
 ENTRYPOINT [ "python3" ]
