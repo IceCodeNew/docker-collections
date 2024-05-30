@@ -34,21 +34,24 @@ WORKDIR /go/src/${REPOPATH}/
 RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules --depth 1 --single-branch \
         "https://${REPOPATH}" ./
 
-ENV CFLAGS='-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all' \
-    CXXFLAGS='-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all' \
-    LDFLAGS="-fuse-ld=mold -static-pie"
+ARG TARGETARCH
+RUN case "$TARGETARCH" in \
+        amd64) export protect_branch="-fcf-protection=full"; \
+               export CPU_CFLAGS="-march=x86-64-v2";; \
+        arm64) export protect_branch="-mbranch-protection=standard"; \
+               export CPU_CFLAGS="-march=armv8.1-a+crypto";; \
+            *) echo "unsupported architecture"; exit 1 ;; \
+    esac
 ENV PKG_CONFIG_ALL_STATIC=true \
     PKG_CONFIG="pkgconf --static --pure"
-ARG TARGETARCH
+ENV CC=clang \
+    CXX=clang++ \
+    LDFLAGS="-fuse-ld=mold -static-pie" \
+    CFLAGS="-fsanitize=cfi -fvisibility=hidden -O2 -ftree-vectorize -flto=thin -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all" \
+    CXXFLAGS="-fsanitize=cfi -fvisibility=hidden -O2 -ftree-vectorize -flto=thin -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all"
+
 WORKDIR /aws-lc-build/
-RUN case "$TARGETARCH" in \
-        amd64) export protect_branch='-fcf-protection=full';; \
-        arm64) export protect_branch='-mbranch-protection=standard';; \
-            *) echo "unsupported architecture"; exit 1 ;; \
-    esac \
-    &&   CFLAGS="${CFLAGS}   ${protect_branch}" \
-    && CXXFLAGS="${CXXFLAGS} ${protect_branch}" \
-    && export CFLAGS CXXFLAGS \
+RUN env \
     && cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/aws-lc-install \
