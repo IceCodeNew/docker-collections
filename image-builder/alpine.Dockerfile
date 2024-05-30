@@ -13,7 +13,8 @@ RUN apk update; apk --no-progress --no-cache add \
         build-base linux-headers patch \
         musl musl-dev musl-libintl musl-utils \
         pkgconf mold \
-        clang cmake ninja-build ninja-is-really-ninja \
+        clang compiler-rt \
+        cmake ninja-build ninja-is-really-ninja \
         libtree; \
     apk --no-progress --no-cache upgrade; \
     rm -rf /var/cache/apk/*; \

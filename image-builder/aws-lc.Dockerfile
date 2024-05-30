@@ -13,7 +13,8 @@ RUN apk update \
         ca-certificates curl grep sed \
         coreutils \
         binutils build-base file linux-headers \
-        clang cmake ninja-build ninja-is-really-ninja \
+        clang compiler-rt \
+        cmake ninja-build ninja-is-really-ninja \
         git \
         libarchive-tools \
         mold \
@@ -47,8 +48,13 @@ ENV PKG_CONFIG_ALL_STATIC=true \
 ENV CC=clang \
     CXX=clang++ \
     LDFLAGS="-fuse-ld=mold -static-pie" \
-    CFLAGS="-fsanitize=cfi -fvisibility=hidden -O2 -ftree-vectorize -flto=thin -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all" \
-    CXXFLAGS="-fsanitize=cfi -fvisibility=hidden -O2 -ftree-vectorize -flto=thin -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all"
+    CFLAGS="-O2 -ftree-vectorize -flto=thin -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches" \
+    CXXFLAGS="-O2 -ftree-vectorize -flto=thin -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches"
+# wait for compiler-rt upgraded to 18.x
+#   -fstack-clash-protection
+#   -fsanitize=cfi -fvisibility=hidden 
+# do not use:
+#   -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all
 
 WORKDIR /aws-lc-build/
 RUN env \

@@ -16,7 +16,8 @@ RUN microdnf -y --setopt=install_weak_deps=0 --disablerepo="*" --enablerepo=fedo
         bsdtar parallel \
         binutils cpp gcc gcc-c++ git-core m4 make pkgconf \
         diffutils patch \
-        clang mold \
+        clang compiler-rt \
+        mold \
         musl-clang musl-gcc musl-libc-static \
         cmake ninja-build \
         libtree \
