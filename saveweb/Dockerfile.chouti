@@ -7,6 +7,7 @@ USER root:root
 RUN apk update \
     && apk --no-progress --no-cache add \
         curl \
+        scudo-malloc \
     && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/*;
 
@@ -28,17 +29,22 @@ RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
                 /home/nonroot/.venv/bin/activate \
                 /home/nonroot/.venv/bin/chouti_links;
 
-USER root:root
-RUN chown -R nonroot:nonroot /home/nonroot/
+
+FROM cgr.dev/chainguard/python:latest AS assets
+# be aware of the ownership of /home/nonroot/
+# refer to: https://github.com/moby/buildkit/issues/4964
+COPY --from=build --chown=nonroot:nonroot /home/nonroot/       /emptydir/home/nonroot/
+COPY --from=build                         /usr/lib/libscudo.so /emptydir/usr/lib/
 
 
 FROM cgr.dev/chainguard/python:latest
-# be aware of the ownership of /home/nonroot/
-COPY --link --from=build /home/ /home/
+COPY --link --from=assets /emptydir/ /
 WORKDIR /home/nonroot/
 
 ENV TZ=Asia/Taipei
 ENV VIRTUAL_ENV=/home/nonroot/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:/home/nonroot/.cargo/bin:${PATH}"
+ENV LD_PRELOAD=/usr/lib/libscudo.so
+
 ENTRYPOINT [ "python3" ]
 CMD [ "/home/nonroot/.venv/bin/chouti_links" ]
