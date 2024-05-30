@@ -45,6 +45,7 @@ ENV TZ=Asia/Taipei
 ENV VIRTUAL_ENV=/home/nonroot/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:/home/nonroot/.cargo/bin:${PATH}"
 ENV LD_PRELOAD=/usr/lib/libscudo.so
+ENV NO_MALLOC_TRIM=true
 
 ENTRYPOINT [ "python3" ]
 CMD [ "/home/nonroot/.venv/bin/chouti_links" ]
