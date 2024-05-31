@@ -15,6 +15,7 @@ ARG image_build_date='2024-05-28'
 RUN apk update \
     && apk --no-progress --no-cache add \
         pcre2-dev \
+        scudo-malloc-dev scudo-malloc-static \
     && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/*
 COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /usr/local/
@@ -61,6 +62,7 @@ RUN case "$TARGETARCH" in \
         OPT_CFLAGS="-O2 -ftree-vectorize" \
         CPU_CFLAGS="$CPU_CFLAGS" \
         DEFINE="-D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch}" \
+        ADDLIB="-Wl,-Bstatic -L/usr/lib -lscudo -Wl,-Bdynamic" \
         V=1 \
     && strip -o /haproxy ./haproxy
 
