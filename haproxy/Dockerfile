@@ -33,7 +33,7 @@ RUN sed -i -E 's!MYCFLAGS=.*!MYCFLAGS='"$CFLAGS"' -fPIC!' src/Makefile \
 
 
 FROM step1_lua54 AS haproxy
-ARG haproxy_branch=2.9
+ARG haproxy_branch=3.0
 ARG dockerfile_workdir=/build_root/haproxy/
 WORKDIR "$dockerfile_workdir"
 RUN unset -f curl \
@@ -70,7 +70,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM haproxy:2.9-alpine AS assets
+FROM haproxy:3.0-alpine AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \
