@@ -14,25 +14,16 @@ ARG image_build_date='2024-05-28'
 
 RUN apk update \
     && apk --no-progress --no-cache add \
+        lua5.4-dev \
         pcre2-dev \
         scudo-malloc-dev scudo-malloc-static \
     && apk --no-progress --no-cache upgrade \
+    && rm -f /usr/lib/lua5.4/liblua.so \
     && rm -rf /var/cache/apk/*
 COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /usr/local/
 
 
-FROM step0_prepare AS step1_lua54
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG lua_version='5.4.6'
-ARG dockerfile_workdir=/build_root/lua/
-WORKDIR "$dockerfile_workdir"
-RUN curl -sS "https://www.lua.org/ftp/lua-${lua_version}.tar.gz" | bsdtar -xf- --strip-components 1 --no-xattrs
-RUN sed -i -E 's!MYCFLAGS=.*!MYCFLAGS='"$CFLAGS"' -fPIC!' src/Makefile \
-    && mold -run make all test \
-    && make install
-
-
-FROM step1_lua54 AS haproxy
+FROM step0_prepare AS haproxy
 ARG haproxy_branch=3.0
 ARG dockerfile_workdir=/build_root/haproxy/
 WORKDIR "$dockerfile_workdir"
@@ -55,7 +46,7 @@ RUN case "$TARGETARCH" in \
         USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 \
         USE_OPENSSL_AWSLC=1 SSL_INC="/usr/local/include/openssl" SSL_LIB="/usr/local/lib" \
         USE_PROMEX=1 \
-        USE_LUA=1 \
+        USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
         CC=clang CXX=clang++ \
         ARCH_FLAGS="-flto=thin" \
