@@ -33,7 +33,7 @@ RUN echo 'source /home/nonroot/.cargo/env' > /home/nonroot/.bashrc \
     && chmod +x /home/nonroot/.bashrc \
                 /home/nonroot/.cargo/env \
                 /home/nonroot/.venv/bin/activate \
-                /home/nonroot/.venv/bin/chouti_links;
+                /home/nonroot/.venv/bin/chouti_comments;
 
 
 FROM cgr.dev/chainguard/python:latest AS assets
@@ -55,4 +55,4 @@ ENV LD_PRELOAD=/usr/lib/libmimalloc-secure.so \
 ENV NO_MALLOC_TRIM=true
 
 ENTRYPOINT [ "python3" ]
-CMD [ "/home/nonroot/.venv/bin/chouti_links" ]
+CMD [ "/home/nonroot/.venv/bin/chouti_comments" ]
