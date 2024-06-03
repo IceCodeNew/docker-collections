@@ -8,6 +8,7 @@ on:
     - '.github/workflows/auto-update-vars.yml'
     - '.github/workflows/haproxy.yml'
     - '.github/workflows/image-builder.yml'
+    - 'caddy/**'
     - 'haproxy/**'
     - 'image-builder/**'
   schedule:
@@ -43,15 +44,11 @@ jobs:
           "rm" -f "$TMP_FILE"
           export GITHUB_API_BASEURL
 
-          lua_version=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
-              "https://www.lua.org/download.html" \
-              | tr -d '\r\n\t' | grep -Po '(?<=lua-)[0-9]\.[0-9]\.[0-9](?=\.tar\.gz)' | sort -Vr | head -n 1)
-          mold_latest_tag_name=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
-              "${GITHUB_API_BASEURL}/repos/rui314/mold/releases/latest" \
+          CADDY_VERSION=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
+              "${GITHUB_API_BASEURL}/repos/caddyserver/caddy/releases/latest" \
               | grep -F 'tag_name' | cut -d'"' -f4)
 
-          echo "lua_version=${lua_version}" >> "$GITHUB_ENV"
-          echo "mold_latest_tag_name=${mold_latest_tag_name}" >> "$GITHUB_ENV"
+          echo "CADDY_VERSION=${CADDY_VERSION}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=$(TZ=':Asia/Taipei' date +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
           echo "image_build_date=$(TZ=':Asia/Taipei' date +%F)" >> "$GITHUB_ENV"
           set +x
@@ -65,16 +62,16 @@ jobs:
           git reset --hard origin/master
 
           _files=(
+              ./caddy/Dockerfile
+              ./haproxy/Dockerfile
               ./image-builder/alpine.Dockerfile
               ./image-builder/aws-lc.Dockerfile
               ./image-builder/endlessh.Dockerfile
               ./image-builder/modern-toolbox-fedora.Dockerfile
-              ./haproxy/Dockerfile
           )
           export _files
           sed -i -E \
-              -e "s/^ARG lua_version=.+/ARG lua_version=${lua_version:?empty value}/" \
-              -e "s/^ARG mold_latest_tag_name=.+/ARG mold_latest_tag_name=${mold_latest_tag_name:?empty value}/" \
+              -e "s/^ARG CADDY_VERSION=.*/ARG CADDY_VERSION=${CADDY_VERSION:?empty value}/" \
               -e "s/^ARG image_build_date=.+/ARG image_build_date=${image_build_date:?empty value}/" \
               "${_files[@]}"
 

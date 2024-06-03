@@ -3,13 +3,14 @@ name: Caddy Image CI
 on:
   push:
     branches:
-    - 'master'
+    - 'release'
     paths:
     - '.github/workflows/caddy.yml'
     - 'caddy/**'
-  schedule:
-  - cron: "50 1 * * *"
   workflow_dispatch:
+  workflow_run:
+    workflows: [Auto Update Variables]
+    types: [completed]
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/caddy
