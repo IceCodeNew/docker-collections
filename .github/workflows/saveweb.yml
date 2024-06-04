@@ -17,7 +17,7 @@ env:
 jobs:
   chouti:
     name: chouti
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -72,7 +72,7 @@ jobs:
           retention-days: 1
 
   chouti-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - chouti
     steps:
@@ -105,7 +105,7 @@ jobs:
 
   huashijie:
     name: huashijie
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -160,7 +160,7 @@ jobs:
           retention-days: 1
 
   huashijie-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - huashijie
     steps:
@@ -193,7 +193,7 @@ jobs:
 
   lowapk-v2:
     name: lowapk-v2
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -248,7 +248,7 @@ jobs:
           retention-days: 1
 
   lowapk-v2-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - lowapk-v2
     steps:

@@ -14,7 +14,7 @@ env:
 
 jobs:
   aws-lc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +65,7 @@ jobs:
           retention-days: 1
 
   aws-lc-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - aws-lc
     steps:
@@ -97,7 +97,7 @@ jobs:
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:aws-lc
 
   modern-toolbox-fedora:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -148,7 +148,7 @@ jobs:
           retention-days: 1
 
   modern-toolbox-fedora-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - modern-toolbox-fedora
     steps:
@@ -180,7 +180,7 @@ jobs:
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora
 
   alpine:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -231,7 +231,7 @@ jobs:
           retention-days: 1
 
   alpine-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - alpine
     steps:
@@ -263,7 +263,7 @@ jobs:
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:alpine
 
   endlessh:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -314,7 +314,7 @@ jobs:
           retention-days: 1
 
   endlessh-multiarch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - endlessh
     steps:
