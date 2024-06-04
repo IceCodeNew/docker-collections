@@ -9,14 +9,12 @@ RUN apk update \
         curl \
         jemalloc \
         mimalloc2 \
-        scudo-malloc \
     && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/*;
 
 WORKDIR /emptydir/usr/lib/
 RUN cp -a /usr/lib/libjemalloc.so.2 \
           /usr/lib/libmimalloc-secure.so* \
-          /usr/lib/libscudo.so \
           /emptydir/usr/lib/
 
 USER nonroot:nonroot
@@ -50,7 +48,8 @@ WORKDIR /home/nonroot/
 ENV TZ=Asia/Taipei
 ENV VIRTUAL_ENV=/home/nonroot/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:/home/nonroot/.cargo/bin:${PATH}"
-ENV LD_PRELOAD=/usr/lib/libscudo.so
+ENV LD_PRELOAD=/usr/lib/libmimalloc-secure.so \
+    MIMALLOC_SHOW_STATS=1
 
 ENTRYPOINT [ "python3" ]
 CMD [ "/home/nonroot/.venv/bin/lowapk_v2" ]
