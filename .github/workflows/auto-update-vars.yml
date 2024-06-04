@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: "${{ secrets.UPDATE_WORKFLOW_TOKEN }}"
       - name: Set some variables
         shell: bash
         run: |
