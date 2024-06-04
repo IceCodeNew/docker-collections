@@ -8,25 +8,13 @@ on:
     - '.github/workflows/image-builder.yml'
     - 'image-builder/**'
   workflow_dispatch:
-  workflow_run:
-    workflows: [Auto Update Variables]
-    types: [completed]
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/image-builder
 
 jobs:
-  on-failure:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - shell: bash
-        run: |
-          echo 'The triggering workflow failed'
-          exit 0
   aws-lc:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -78,7 +66,6 @@ jobs:
 
   aws-lc-multiarch:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs:
       - aws-lc
     steps:
@@ -111,7 +98,6 @@ jobs:
 
   modern-toolbox-fedora:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -163,7 +149,6 @@ jobs:
 
   modern-toolbox-fedora-multiarch:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs:
       - modern-toolbox-fedora
     steps:
@@ -196,7 +181,6 @@ jobs:
 
   alpine:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -248,7 +232,6 @@ jobs:
 
   alpine-multiarch:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs:
       - alpine
     steps:
@@ -281,7 +264,6 @@ jobs:
 
   endlessh:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -333,7 +315,6 @@ jobs:
 
   endlessh-multiarch:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs:
       - endlessh
     steps:

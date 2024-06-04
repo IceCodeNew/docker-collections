@@ -8,9 +8,6 @@ on:
     - '.github/workflows/caddy.yml'
     - 'caddy/**'
   workflow_dispatch:
-  workflow_run:
-    workflows: [Auto Update Variables]
-    types: [completed]
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/caddy
