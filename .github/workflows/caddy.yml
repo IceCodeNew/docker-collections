@@ -14,6 +14,7 @@ on:
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/caddy
+  CADDY_VERSION: latest
 
 jobs:
   images:
@@ -25,6 +26,53 @@ jobs:
           - linux/amd64
           - linux/arm64
     steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'caddyserver/caddy'
+          ref: "${{ env.CADDY_VERSION }}"
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          check-latest: true
+          cache: true
+          go-version: 'stable'
+      - name: Set up xcaddy
+        uses: engineerd/configurator@v0.0.10
+        with:
+          name: xcaddy
+          pathInArchive: xcaddy
+          fromGitHubReleases: "true"
+          repo: "caddyserver/xcaddy"
+          version: "latest"
+          urlTemplate: "https://github.com/caddyserver/xcaddy/releases/download/{{version}}/xcaddy_{{rawVersion}}_linux_amd64.tar.gz"
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        env:
+          _TARGETARCH: ${{ matrix.platform }}
+        run: |
+          # go env -w GOFLAGS="$GOFLAGS -buildmode=pie"
+          go env -w CGO_ENABLED=0
+          case "$_TARGETARCH" in \
+              linux/amd64) \
+                  go env -w GOAMD64=v2   ;; \
+              linux/arm64) \
+                  go env -w  GOARCH=arm64;; \
+              *) \
+                  echo "unsupported architecture"; exit 1 ;; \
+          esac
+
+          export XCADDY_SETCAP=1
+          xcaddy build \
+              --with github.com/caddy-dns/cloudflare@master \
+              --with github.com/mholt/caddy-l4@master \
+              --output ./caddy
+      - name: Install
+        run: |
+          sudo apt-get update \
+              && sudo apt-get install -y checksec \
+              && checksec --file=./caddy
+          sudo mkdir -p /results/ \
+              && sudo install -spvD ./caddy /results/
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -42,6 +90,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
+          build-args: CADDY_VERSION=${{ env.CADDY_VERSION }}
+          build-contexts: local-bin=/results/
           context: "{{defaultContext}}:caddy"
           push: true
           platforms: ${{ matrix.platform }}

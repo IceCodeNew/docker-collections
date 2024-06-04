@@ -1,23 +1,11 @@
 # syntax=docker/dockerfile:1
 
-FROM docker.io/library/caddy:builder AS builder
-ARG CADDY_VERSION=
-ENV CADDY_VERSION=${CADDY_VERSION:-latest} \
-    XCADDY_SETCAP=1
-RUN go env -w GOFLAGS="$GOFLAGS -buildmode=pie" \
-    && go env -w GOAMD64=v2 \
-    && xcaddy build \
-    --with github.com/caddy-dns/cloudflare@master \
-    --with github.com/mholt/caddy-l4@master \
-    --output "/usr/bin/caddy" \
-    && chmod 755 /usr/bin/caddy
-
-FROM docker.io/library/caddy:latest  AS caddy
+FROM docker.io/library/caddy:latest AS caddy
 RUN apk update; apk --no-progress --no-cache add \
         tzdata; \
     apk --no-progress --no-cache upgrade; \
     rm -rf /var/cache/apk/*;
-COPY --link --from=builder /usr/bin/caddy /usr/bin/
+COPY --link --from=local-bin ./caddy /usr/bin/
 RUN /usr/bin/caddy version \
     && /usr/bin/caddy list-modules \
     && /usr/bin/caddy build-info
@@ -32,6 +20,10 @@ ENV TZ=Asia/Taipei
 ENV XDG_CONFIG_HOME=/config
 ENV XDG_DATA_HOME=/data
 
+ARG CADDY_VERSION=
+ENV CADDY_VERSION=${CADDY_VERSION:-latest}
+
+LABEL org.opencontainers.image.version=$CADDY_VERSION
 LABEL org.opencontainers.image.title=Caddy
 LABEL org.opencontainers.image.description="a powerful, enterprise-ready, open source web server with automatic HTTPS written in Go"
 LABEL org.opencontainers.image.url=https://caddyserver.com
