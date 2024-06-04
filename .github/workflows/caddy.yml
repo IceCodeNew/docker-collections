@@ -53,12 +53,17 @@ jobs:
               linux/amd64) \
                   go env -w GOAMD64=v2   ;; \
               linux/arm64) \
+                  # TODO: GOARM64=???
+                  # needs go@1.23.x
                   go env -w  GOARCH=arm64;; \
               *) \
                   echo "unsupported architecture"; exit 1 ;; \
           esac
 
+          # TODO: XCADDY_GO_BUILD_FLAGS="-bindnow -trimpath -ldflags '-w -s'"
+          # needs: go@1.23.x
           export XCADDY_SETCAP=1
+          export XCADDY_GO_BUILD_FLAGS="-trimpath -ldflags '-w -s'"
           xcaddy build \
               --with github.com/caddy-dns/cloudflare@master \
               --with github.com/mholt/caddy-l4@master \
