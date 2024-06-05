@@ -16,6 +16,7 @@ RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
         pcre2-dev \
+        jemalloc-dev jemalloc-static \
         scudo-malloc-dev scudo-malloc-static \
     && apk --no-progress --no-cache upgrade \
     && rm -f /usr/lib/lua5.4/liblua.so \
@@ -53,7 +54,7 @@ RUN case "$TARGETARCH" in \
         OPT_CFLAGS="-O2 -ftree-vectorize" \
         CPU_CFLAGS="$CPU_CFLAGS" \
         DEFINE="-D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch}" \
-        ADDLIB="-Wl,-Bstatic -L/usr/lib -lscudo -Wl,-Bdynamic" \
+        ADDLIB="-Wl,-Bstatic -L/usr/lib -ljemalloc_pic -Wl,-Bdynamic" \
         V=1 \
     && strip -o /haproxy ./haproxy
 
