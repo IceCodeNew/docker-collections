@@ -27,6 +27,13 @@ jobs:
           go-version: 'stable'
           check-latest: true
 
+      - name: pre-start
+        shell: bash
+        run: |
+          curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
+          curl -o '.ko.yaml' -- \
+              https://raw.githubusercontent.com/IceCodeNew/docker-collections/master/default.ko.yaml
+
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
