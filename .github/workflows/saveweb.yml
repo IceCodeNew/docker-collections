@@ -102,6 +102,12 @@ jobs:
         name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:huashijie
+      -
+        name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.21.0
+        with:
+          image-ref: "${{ env.REGISTRY_IMAGE }}:huashijie"
+          format: 'table'
 
   lowapk-v2:
     name: lowapk-v2
@@ -190,3 +196,9 @@ jobs:
         name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:lowapk-v2
+      -
+        name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.21.0
+        with:
+          image-ref: "${{ env.REGISTRY_IMAGE }}:lowapk-v2"
+          format: 'table'

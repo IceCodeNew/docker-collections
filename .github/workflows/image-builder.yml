@@ -178,6 +178,12 @@ jobs:
         name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora
+      -
+        name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.21.0
+        with:
+          image-ref: "${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora"
+          format: 'table'
 
   alpine:
     runs-on: ubuntu-24.04
@@ -261,6 +267,12 @@ jobs:
         name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:alpine
+      -
+        name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.21.0
+        with:
+          image-ref: "${{ env.REGISTRY_IMAGE }}:alpine"
+          format: 'table'
 
   endlessh:
     runs-on: ubuntu-24.04
@@ -344,3 +356,9 @@ jobs:
         name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:endlessh
+      -
+        name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.21.0
+        with:
+          image-ref: "${{ env.REGISTRY_IMAGE }}:endlessh"
+          format: 'table'
