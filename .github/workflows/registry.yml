@@ -1,0 +1,35 @@
+name: registry Image CI
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - '.github/workflows/registry.yml'
+    - 'registry/**'
+  schedule:
+  - cron: "10 3 * * *"
+  workflow_dispatch:
+
+env:
+  REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/registry
+
+jobs:
+  build-registry-base:
+    name: Build registry-base
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build registry-base
+        shell: bash
+        run: |
+          curl() { /usr/bin/curl -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
+          curl -sS -o ./apko-installer -- 'i.jpillora.com/chainguard-dev/apko!'
+          bash -x ./apko-installer
+          apko publish ./registry/base.yaml ${{ env.REGISTRY_IMAGE }}:base
