@@ -49,11 +49,16 @@ jobs:
               "${GITHUB_API_BASEURL}/repos/caddyserver/caddy/releases/latest" \
               | grep -F 'tag_name' | cut -d'"' -f4)
 
+          TAILSCALE_VERSION=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
+              "${GITHUB_API_BASEURL}/repos/tailscale/tailscale/releases/latest" \
+              | grep -F 'tag_name' | cut -d'"' -f4)
+
           aws_lc_latest_tag=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
               "${GITHUB_API_BASEURL}/repos/aws/aws-lc/releases/latest" \
               | grep -F 'tag_name' | cut -d'"' -f4)
 
           echo "CADDY_VERSION=${CADDY_VERSION}" >> "$GITHUB_ENV"
+          echo "TAILSCALE_VERSION=${TAILSCALE_VERSION}" >> "$GITHUB_ENV"
           echo "aws_lc_latest_tag=${aws_lc_latest_tag}" >> "$GITHUB_ENV"
           echo "RELEASE_NAME=$(TZ=':Asia/Taipei' date +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
           echo "image_build_date=$(TZ=':Asia/Taipei' date +%F)" >> "$GITHUB_ENV"
@@ -69,6 +74,7 @@ jobs:
 
           _files=(
               ./.github/workflows/caddy.yml
+              ./.github/workflows/derp.yml
               ./caddy/Dockerfile
               ./haproxy/Dockerfile
               ./image-builder/alpine.Dockerfile
@@ -80,6 +86,7 @@ jobs:
           sed -i -E \
               -e "s/CADDY_VERSION: .+/CADDY_VERSION: ${CADDY_VERSION:?empty value}/" \
               -e "s/^ARG CADDY_VERSION=.*/ARG CADDY_VERSION=${CADDY_VERSION:?empty value}/" \
+              -e "s/TAILSCALE_VERSION: .+/TAILSCALE_VERSION: ${TAILSCALE_VERSION:?empty value}/" \
               -e "s/^ARG aws_lc_latest_tag=.*/ARG aws_lc_latest_tag=${aws_lc_latest_tag:?empty value}/" \
               -e "s/^ARG image_build_date=.+/ARG image_build_date=${image_build_date:?empty value}/" \
               "${_files[@]}"

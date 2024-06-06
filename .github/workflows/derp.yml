@@ -3,12 +3,14 @@ name: Derp Image CI
 on:
   push:
     branches:
-    - 'master'
+    - 'release'
     paths:
     - '.github/workflows/derp.yml'
-  schedule:
-  - cron: "40 1 * * *"
   workflow_dispatch:
+
+
+env:
+  TAILSCALE_VERSION: latest
 
 jobs:
   publish:
@@ -17,8 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: 'tailscale/tailscale'
-          ref: 'main'
+          repository: "tailscale/tailscale"
+          ref: "${{ env.TAILSCALE_VERSION }}"
 
       - uses: actions/setup-go@v5
         with:
