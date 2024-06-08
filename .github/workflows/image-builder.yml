@@ -94,7 +94,8 @@ jobs:
       -
         name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:aws-lc
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:aws-lc \
+              | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
 
   modern-toolbox-fedora:
     runs-on: ubuntu-24.04
@@ -177,7 +178,8 @@ jobs:
       -
         name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora \
+              | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.21.0
@@ -266,7 +268,8 @@ jobs:
       -
         name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:alpine
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:alpine \
+              | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.21.0
@@ -355,7 +358,8 @@ jobs:
       -
         name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:endlessh
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:endlessh \
+              | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.21.0
