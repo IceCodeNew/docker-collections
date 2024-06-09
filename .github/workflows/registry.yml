@@ -29,7 +29,7 @@ jobs:
       - name: Build registry-base
         shell: bash
         run: |
-          curl() { /usr/bin/curl -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
+          curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
           curl -sS -o ./apko-installer -- 'i.jpillora.com/chainguard-dev/apko!'
           bash -x ./apko-installer
           apko publish ./registry/base.yaml ${{ env.REGISTRY_IMAGE }}:base
