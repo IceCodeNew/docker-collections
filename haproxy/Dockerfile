@@ -21,7 +21,7 @@ RUN apk update \
     && apk --no-progress --no-cache upgrade \
     && rm -f /usr/lib/lua5.4/liblua.so \
     && rm -rf /var/cache/apk/*
-COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /usr/local/
+COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /aws-lc-install/
 
 
 FROM step0_prepare AS haproxy
@@ -43,9 +43,10 @@ RUN case "$TARGETARCH" in \
                export CPU_CFLAGS="-march=armv8.1-a+crypto";; \
             *) echo "unsupported architecture"; exit 1 ;; \
     esac \
+    && unset CFLAGS CXXFLAGS LDFLAGS \
     && make -j "$(nproc)" TARGET=linux-musl \
         USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 \
-        USE_OPENSSL_AWSLC=1 SSL_INC="/usr/local/include/openssl" SSL_LIB="/usr/local/lib" \
+        USE_OPENSSL_AWSLC=1 SSL_INC="/aws-lc-install/include" SSL_LIB="/aws-lc-install/lib" \
         USE_PROMEX=1 \
         USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
