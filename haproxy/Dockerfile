@@ -52,7 +52,7 @@ RUN case "$TARGETARCH" in \
         USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
         CC=clang-18 CXX=clang++-18 \
-        ARCH_FLAGS="-flto=thin -fsanitize=cfi -fvisibility=hidden" \
+        ARCH_FLAGS="-flto=thin" \
         OPT_CFLAGS="-O2 -ftree-vectorize" \
         CPU_CFLAGS="$CPU_CFLAGS" \
         DEFINE="-D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch}" \
