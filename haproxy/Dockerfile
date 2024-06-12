@@ -46,7 +46,8 @@ RUN case "$TARGETARCH" in \
     && unset CFLAGS CXXFLAGS LDFLAGS \
     && make -j "$(nproc)" TARGET=linux-musl \
         USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 \
-        USE_OPENSSL_AWSLC=1 SSL_INC="/aws-lc-install/include" SSL_LIB="/aws-lc-install/lib" \
+        USE_OPENSSL_AWSLC=1 USE_QUIC=1 \
+        SSL_INC="/aws-lc-install/include" SSL_LIB="/aws-lc-install/lib" \
         USE_PROMEX=1 \
         USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
