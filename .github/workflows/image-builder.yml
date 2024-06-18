@@ -37,7 +37,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./aws-lc.Dockerfile"
@@ -121,7 +121,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./modern-toolbox-fedora.Dockerfile"
@@ -211,7 +211,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./alpine.Dockerfile"
@@ -301,7 +301,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./endlessh.Dockerfile"
