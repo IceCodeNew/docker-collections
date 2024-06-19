@@ -12,10 +12,16 @@ sudo docker rm -f watchtower \
     containrrr/watchtower
 
 export ARCHIVIST=icn
-docker pull icecodexi/saveweb:huashijie \
-    && docker rm -f huashijie \
-    && docker run --name huashijie --restart always -e ARCHIVIST="$ARCHIVIST" -d -it icecodexi/saveweb:huashijie
+for _cname in acdanmaku huashijie; do
+    docker pull "icecodexi/saveweb:${_cname}"
+    docker rm -f "${_cname}" \
+        && docker run --env ARCHIVIST="$ARCHIVIST" --restart always --name "${_cname}" \
+            --cpu-shares 512 --memory 512M --memory-swap 512M \
+            --detach "icecodexi/saveweb:${_cname}"
+done
 docker pull icecodexi/saveweb:lowapk-v2 \
     && docker rm -f lowapk \
-    && docker run --name lowapk    --restart always -e ARCHIVIST="$ARCHIVIST" -d -it icecodexi/saveweb:lowapk-v2
+    && docker run --env ARCHIVIST="$ARCHIVIST" --restart always --name lowapk \
+        --cpu-shares 512 --memory 512M --memory-swap 512M \
+        --detach icecodexi/saveweb:lowapk-v2
 ```
