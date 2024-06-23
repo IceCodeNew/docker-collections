@@ -12,6 +12,7 @@ RUN apk update \
     && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/* \
     && /bin/mv -f /bin/busybox.static /bin/busybox
+RUN ln -sf /bin/busybox /bin/nc
 
 # fix: check_command failed
 RUN sh -x /gg.sh || true
