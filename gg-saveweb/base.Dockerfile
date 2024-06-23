@@ -8,6 +8,7 @@ RUN apk update \
     && apk --no-progress --no-cache add \
         libcap-utils \
         upx \
+    && apk --no-progress --no-cache upgrade \
     && rm -rf /var/cache/apk/*
 
 # fix: check_command failed
