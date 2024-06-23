@@ -2,7 +2,7 @@
 
 FROM icecodexi/image-builder:alpine AS step0_prepare
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG image_build_date='2024-05-28'
+ARG image_build_date=2024-06-23
 
 ## pre-defined envs
 # ENV LANG=C.UTF-8 \

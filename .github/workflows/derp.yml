@@ -10,7 +10,7 @@ on:
 
 
 env:
-  TAILSCALE_VERSION: latest
+  TAILSCALE_VERSION: v1.68.0
 
 jobs:
   publish:

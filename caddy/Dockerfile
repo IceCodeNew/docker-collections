@@ -20,7 +20,7 @@ ENV TZ=Asia/Taipei
 ENV XDG_CONFIG_HOME=/config
 ENV XDG_DATA_HOME=/data
 
-ARG CADDY_VERSION=
+ARG CADDY_VERSION=v2.8.4
 ENV CADDY_VERSION=${CADDY_VERSION:-latest}
 
 LABEL org.opencontainers.image.version=$CADDY_VERSION

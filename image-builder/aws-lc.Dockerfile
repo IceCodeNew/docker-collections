@@ -14,7 +14,7 @@ WORKDIR $GOPATH
 # FROM golang:alpine AS golang-builder
 
 
-ARG image_build_date='2024-05-11'
+ARG image_build_date=2024-06-23
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG=C.UTF-8 \
@@ -42,7 +42,7 @@ ENV CGO_ENABLED=0
 
 
 FROM golang-builder AS aws-lc-builder
-ARG aws_lc_latest_tag='v1.28.0'
+ARG aws_lc_latest_tag=v1.30.1
 ARG REPOPATH="github.com/aws/aws-lc"
 WORKDIR /go/src/${REPOPATH}/
 RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules --depth 1 --single-branch \
