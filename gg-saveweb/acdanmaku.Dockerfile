@@ -5,5 +5,5 @@ FROM icecodexi/saveweb:acdanmaku
 COPY --link --from=assets /bin/           /bin/
 COPY --link --from=assets /usr/local/bin/ /usr/local/bin/
 COPY --link --chmod=755  ./entrypoint.sh  /
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "/ko-app/acdanmaku" ]
