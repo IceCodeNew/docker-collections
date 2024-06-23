@@ -2,8 +2,9 @@
 
 FROM icecodexi/gg-saveweb:base AS assets
 FROM icecodexi/saveweb:acdanmaku
+COPY --link --chmod=755   ./entrypoint.sh /home/nonroot/
 COPY --link --from=assets /bin/           /bin/
 COPY --link --from=assets /usr/local/bin/ /usr/local/bin/
-COPY --link --chmod=755  ./entrypoint.sh  /
-ENTRYPOINT [ "/entrypoint.sh" ]
+
+ENTRYPOINT [ "/home/nonroot/entrypoint.sh" ]
 CMD [ "/ko-app/acdanmaku" ]
