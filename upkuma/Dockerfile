@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:buster AS graftcp-builder
+FROM bitnami/minideb:buster AS graftcp-builder
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && echo 'force-unsafe-io' > '/etc/dpkg/dpkg.cfg.d/docker-apt-speedup' \
@@ -12,20 +12,27 @@ RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
         mercurial mercurial-common \
         mime-support \
     && apt-get -y --no-install-recommends install \
-        ca-certificates \
-        git \
         binutils build-essential coreutils file netbase \
+        ca-certificates \
+        gzip tar \
         ucf \
     && apt-get full-upgrade -y \
     && apt-get clean \
     && rm -rf /var/cache/apt/* \
     && rm -rf /var/lib/apt/lists/*
+
+ARG TARGETARCH
+ENV GOLANG_VERSION=1.22.5 \
+    PATH="/usr/local/go/bin:${PATH}"
+ADD --link "https://go.dev/dl/go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz" /go.linux.tar.gz
+RUN rm -rf /usr/local/go \
+    && tar -C /usr/local/ -xzf /go.linux.tar.gz
+
 WORKDIR /emptydir/
 WORKDIR /git/graftcp/
+ADD --link "https://github.com/hmgle/graftcp.git" ./
 ENV CFLAGS="-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs" \
   CXXFLAGS="-O2 -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs"
-RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules --depth 1 --single-branch \
-        https://github.com/hmgle/graftcp.git ./
 RUN go env -w GOFLAGS="$GOFLAGS -buildmode=pie" \
     && go env -w GO111MODULE=on \
     && make \
