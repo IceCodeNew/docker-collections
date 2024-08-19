@@ -67,6 +67,7 @@ jobs:
           xcaddy build \
               --with github.com/caddy-dns/cloudflare@master \
               --with github.com/mholt/caddy-l4@master \
+              --with github.com/caddyserver/cache-handler \
               --output ./caddy
       - name: Install
         run: |
