@@ -6,6 +6,7 @@ on:
     - 'master'
     paths:
     - '.github/workflows/auto-update-vars.yml'
+    - '.github/workflows/caddy.yml'
     - '.github/workflows/haproxy.yml'
     - '.github/workflows/image-builder.yml'
     - 'caddy/**'
