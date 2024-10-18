@@ -2,7 +2,6 @@
 
 FROM docker.io/library/caddy:latest AS caddy
 RUN apk update; apk --no-progress --no-cache add \
-        libc6-compat \
         tzdata; \
     apk --no-progress --no-cache upgrade; \
     rm -rf /var/cache/apk/*;

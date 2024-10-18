@@ -47,6 +47,7 @@ jobs:
         env:
           _TARGETARCH: ${{ matrix.platform }}
         run: |
+          # go env -w GOFLAGS="$GOFLAGS -buildmode=pie"
           go env -w CGO_ENABLED=0
           case "$_TARGETARCH" in \
               linux/amd64) \
@@ -59,8 +60,10 @@ jobs:
                   echo "unsupported architecture"; exit 1 ;; \
           esac
 
+          # TODO: XCADDY_GO_BUILD_FLAGS="-bindnow -trimpath -ldflags '-w -s'"
+          # needs: go@1.23.x
           export XCADDY_SETCAP=1
-          export XCADDY_GO_BUILD_FLAGS="-buildmode=pie -trimpath -ldflags '-bindnow -w -s'"
+          export XCADDY_GO_BUILD_FLAGS="-trimpath -ldflags '-w -s'"
           xcaddy build \
               --with github.com/caddy-dns/cloudflare@master \
               --with github.com/mholt/caddy-l4@master \
@@ -69,12 +72,8 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update \
-              && sudo apt-get install -y \
-                  checksec \
-                  libtree
-          checksec --file=./caddy
-          libtree    -vvv ./caddy
-
+              && sudo apt-get install -y checksec \
+              && checksec --file=./caddy
           sudo mkdir -p /results/ \
               && sudo install -spvD ./caddy /results/
       -
