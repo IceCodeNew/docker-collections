@@ -15,7 +15,7 @@ ARG image_build_date=2024-06-23
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
-        pcre2-dev \
+        pcre2-dev pcre2-static \
         jemalloc-dev jemalloc-static \
         scudo-malloc-dev scudo-malloc-static \
     && apk --no-progress --no-cache upgrade \
