@@ -14,7 +14,7 @@ env:
 
 jobs:
   haproxy:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,9 +22,6 @@ jobs:
           - linux/amd64
           - linux/arm64
     steps:
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -15,7 +15,7 @@ env:
 
 jobs:
   images:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,20 +33,13 @@ jobs:
           check-latest: true
           cache: true
           go-version: 'stable'
-      - name: Set up xcaddy
-        uses: engineerd/configurator@v0.0.10
-        with:
-          name: xcaddy
-          pathInArchive: xcaddy
-          fromGitHubReleases: "true"
-          repo: "caddyserver/xcaddy"
-          version: "latest"
-          urlTemplate: "https://github.com/caddyserver/xcaddy/releases/download/{{version}}/xcaddy_{{rawVersion}}_linux_amd64.tar.gz"
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         env:
           _TARGETARCH: ${{ matrix.platform }}
         run: |
+          # Set up xcaddy
+          curl -- 'https://i.jpillora.com/caddyserver/xcaddy!' | bash
+
           # go env -w GOFLAGS="$GOFLAGS -buildmode=pie"
           go env -w CGO_ENABLED=0
           case "$_TARGETARCH" in \
@@ -76,9 +69,6 @@ jobs:
               && checksec --file=./caddy
           sudo mkdir -p /results/ \
               && sudo install -spvD ./caddy /results/
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
