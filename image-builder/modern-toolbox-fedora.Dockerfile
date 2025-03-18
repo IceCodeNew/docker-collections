@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 
 FROM quay.io/fedora/fedora-minimal:latest AS base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

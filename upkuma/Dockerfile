@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM bitnami/minideb:buster AS graftcp-builder
+FROM mirror.gcr.io/bitnami/minideb:buster AS graftcp-builder
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && echo 'force-unsafe-io' > '/etc/dpkg/dpkg.cfg.d/docker-apt-speedup' \
@@ -40,7 +40,7 @@ RUN go env -w GOFLAGS="$GOFLAGS -buildmode=pie" \
     && rm -rf /git/graftcp/ /go/ /root/.cache/
 
 
-FROM louislam/uptime-kuma:1 AS builder
+FROM mirror.gcr.io/louislam/uptime-kuma:1 AS builder
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && echo 'force-unsafe-io' > '/etc/dpkg/dpkg.cfg.d/docker-apt-speedup' \

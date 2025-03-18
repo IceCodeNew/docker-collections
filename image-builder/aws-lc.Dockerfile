@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM golang:alpine AS golang-builder
+FROM mirror.gcr.io/library/golang:alpine AS golang-builder
 ARG image_build_date=2024-06-23
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.

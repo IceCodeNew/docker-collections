@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM docker.io/library/caddy:latest AS caddy
+FROM mirror.gcr.io/library/caddy:latest AS caddy
 RUN apk update; apk --no-progress --no-cache add \
         tzdata; \
     apk --no-progress --no-cache upgrade; \

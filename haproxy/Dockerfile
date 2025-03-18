@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 
 FROM icecodexi/image-builder:alpine AS step0_prepare
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -64,7 +64,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM haproxy:3.0-alpine AS assets
+FROM mirror.gcr.io/library/haproxy:3.0-alpine AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \

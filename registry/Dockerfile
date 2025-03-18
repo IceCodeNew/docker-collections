@@ -1,6 +1,6 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM registry:2 AS source
+FROM mirror.gcr.io/library/registry:2 AS source
 FROM icecodexi/registry:base AS assets
 WORKDIR /emptydir/
 COPY --from=source --chown=nonroot:nonroot /etc/docker/registry/ \
