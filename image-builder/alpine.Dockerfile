@@ -1,4 +1,4 @@
-FROM mirror.gcr.io/library/alpine:edge AS base
+FROM mirror.gcr.io/library/alpine:latest AS base
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 ARG image_build_date=2024-06-23
 # http://bugs.python.org/issue19846
@@ -13,7 +13,7 @@ RUN apk update; apk --no-progress --no-cache add \
         build-base linux-headers patch \
         musl musl-dev musl-libintl musl-utils \
         pkgconf mold \
-        clang18 compiler-rt \
+        clang compiler-rt \
         cmake samurai \
         libtree; \
     apk --no-progress --no-cache upgrade; \

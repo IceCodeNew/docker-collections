@@ -15,7 +15,7 @@ ARG image_build_date=2024-06-23
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
-        pcre2-dev pcre2-static \
+        pcre2-dev \
         jemalloc-dev jemalloc-static \
         scudo-malloc-dev scudo-malloc-static \
     && apk --no-progress --no-cache upgrade \
@@ -51,7 +51,7 @@ RUN case "$TARGETARCH" in \
         USE_PROMEX=1 \
         USE_LUA=1 LUA_INC=/usr/include/lua5.4 LUA_LIB=/usr/lib/lua5.4 \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
-        CC=clang-18 CXX=clang++-18 \
+        CC=clang CXX=clang++ \
         ARCH_FLAGS="-flto=thin" \
         OPT_CFLAGS="-O2 -ftree-vectorize" \
         CPU_CFLAGS="$CPU_CFLAGS" \

@@ -1,19 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM icecodexi/image-builder:alpine AS golang-builder
-
-# don't auto-upgrade the gotoolchain
-# https://github.com/docker-library/golang/issues/472
-ENV GOTOOLCHAIN=local
-
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
-COPY --from=golang:alpine --link /usr/local/go/ /usr/local/go/
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
-WORKDIR $GOPATH
-# FROM golang:alpine AS golang-builder
-
-
+FROM golang:alpine AS golang-builder
 ARG image_build_date=2024-06-23
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
@@ -26,7 +13,7 @@ RUN apk update \
         ca-certificates curl grep sed \
         coreutils \
         binutils build-base file linux-headers \
-        clang18 compiler-rt \
+        clang compiler-rt \
         cmake samurai \
         git \
         libarchive-tools \
@@ -49,8 +36,8 @@ RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules 
         --branch "${aws_lc_latest_tag:=main}" \
         "https://${REPOPATH}" ./
 
-ENV CC=clang-18 \
-    CXX=clang++-18
+ENV CC=clang \
+    CXX=clang++
 WORKDIR /aws-lc-build/
 RUN unset LDFLAGS CFLAGS CXXFLAGS \
     && cmake -GNinja \
