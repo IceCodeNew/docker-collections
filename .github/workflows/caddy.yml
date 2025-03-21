@@ -46,9 +46,8 @@ jobs:
               linux/amd64) \
                   go env -w GOAMD64=v2   ;; \
               linux/arm64) \
-                  # TODO: GOARM64=???
-                  # needs go@1.23.x
-                  go env -w  GOARCH=arm64;; \
+                  go env -w  GOARCH=arm64;  \
+                  go env -w GOARM64=v8.2;;  \
               *) \
                   echo "unsupported architecture"; exit 1 ;; \
           esac

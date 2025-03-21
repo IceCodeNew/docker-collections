@@ -40,7 +40,7 @@ RUN case "$TARGETARCH" in \
         amd64) export protect_branch="-fcf-protection=full"; \
                export CPU_CFLAGS="-march=x86-64-v2";; \
         arm64) export protect_branch="-mbranch-protection=standard"; \
-               export CPU_CFLAGS="-march=armv8.1-a+crypto";; \
+               export CPU_CFLAGS="-march=armv8.2-a+crypto";; \
             *) echo "unsupported architecture"; exit 1 ;; \
     esac \
     && unset CFLAGS CXXFLAGS LDFLAGS \
