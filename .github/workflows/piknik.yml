@@ -1,0 +1,45 @@
+name: piknik Image CI
+
+on:
+  push:
+    branches:
+    - 'release'
+    paths:
+    - '.github/workflows/piknik.yml'
+  workflow_dispatch:
+
+
+env:
+  PIKNIK_VERSION: 0.10.2
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: "jedisct1/piknik"
+          ref: "${{ env.TAILSCALE_VERSION }}"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          check-latest: true
+
+      - name: pre-start
+        shell: bash
+        run: |
+          curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
+          curl -o '.ko.yaml' -- \
+              https://raw.githubusercontent.com/IceCodeNew/docker-collections/master/default.ko.yaml
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: ko-build/setup-ko@v0.8
+        env:
+          KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/piknik
+      - run: ko build --platform=linux/amd64,linux/arm64 --bare ./
