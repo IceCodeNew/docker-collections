@@ -1,7 +1,7 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
 FROM mirror.gcr.io/library/golang:alpine AS golang-builder
-ARG image_build_date=2024-06-23
+ARG image_build_date=2025-03-25
 # http://bugs.python.org/issue19846
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG=C.UTF-8 \
@@ -29,7 +29,7 @@ ENV CGO_ENABLED=0
 
 
 FROM golang-builder AS aws-lc-builder
-ARG aws_lc_latest_tag=v1.30.1
+ARG aws_lc_latest_tag=v1.48.5
 ARG REPOPATH="github.com/aws/aws-lc"
 WORKDIR /go/src/${REPOPATH}/
 RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules --depth 1 --single-branch \
