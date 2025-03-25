@@ -7,7 +7,7 @@ on:
     paths:
     - '.github/workflows/mmp-go.yml'
   schedule:
-  - cron: "0 3 * * *"
+  - cron: "0 3 1 * *"
   workflow_dispatch:
 
 jobs:
