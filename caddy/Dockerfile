@@ -1,10 +1,12 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
 FROM mirror.gcr.io/library/caddy:latest AS caddy
-RUN apk update; apk --no-progress --no-cache add \
-        tzdata; \
-    apk --no-progress --no-cache upgrade; \
-    rm -rf /var/cache/apk/*;
+RUN apk update \
+    && apk --no-progress --no-cache add \
+        catatonit \
+        tzdata \
+    && apk --no-progress --no-cache upgrade \
+    && rm -rf /var/cache/apk/*;
 COPY --link --from=local-bin ./caddy /usr/bin/
 RUN /usr/bin/caddy version \
     && /usr/bin/caddy list-modules \
@@ -37,5 +39,5 @@ VOLUME /etc/caddy/
 VOLUME /usr/local/etc/caddy/
 VOLUME /tmp/unix-socket/
 
-ENTRYPOINT [ "/usr/bin/caddy" ]
+ENTRYPOINT [ "catatonit", "--", "caddy" ]
 CMD [ "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile", "--watch" ]

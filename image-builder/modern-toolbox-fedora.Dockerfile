@@ -12,7 +12,7 @@ ENV LANG=C.UTF-8 \
 #     && dnf config-manager --set-disabled fedora-cisco-openh264,fedora-modular,updates-modular \
 #     && dnf -y --allowerasing install 'dnf-command(versionlock)' \
 RUN microdnf -y --setopt=install_weak_deps=0 --disablerepo="*" --enablerepo=fedora --enablerepo=updates --best --nodocs install \
-        ca-certificates checksec coreutils curl gawk grep perl sed \
+        ca-certificates catatonit checksec coreutils curl gawk grep perl sed \
         bsdtar parallel \
         binutils cpp gcc gcc-c++ git-core m4 make pkgconf \
         diffutils patch \

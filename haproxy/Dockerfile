@@ -68,9 +68,10 @@ FROM mirror.gcr.io/library/haproxy:3.0-alpine AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \
+        catatonit \
         tzdata \
     && apk --no-progress --no-cache upgrade \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/*;
 
 COPY --link --from=haproxy --chmod=755 /haproxy /usr/local/sbin/
 USER haproxy
@@ -85,11 +86,11 @@ ENV TZ=Asia/Taipei
 
 STOPSIGNAL SIGUSR1
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT [ "catatonit", "--", "docker-entrypoint.sh" ]
 
 USER haproxy
 
 # https://github.com/docker-library/haproxy/issues/200
 WORKDIR /var/lib/haproxy
 
-CMD ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+CMD [ "haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg" ]
