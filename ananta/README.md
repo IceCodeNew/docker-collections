@@ -3,6 +3,7 @@
 ```shell
 docker pull icecodexi/ananta:latest
 mkdir -p "${HOME}/.ssh/"
+find "${HOME}/.ssh/" -type f -print0 | xargs -0 -r chmod 600
 touch "$(pwd)/hosts.csv"
 
 if [[ "$UID" -eq '0' ]]; then
