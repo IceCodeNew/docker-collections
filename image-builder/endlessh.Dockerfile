@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM icecodexi/image-builder:modern-toolbox-fedora AS build-env
+FROM mirror.gcr.io/icecodexi/image-builder:modern-toolbox-fedora AS build-env
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /endlessh
 RUN curl -sSL "https://github.com/skeeto/endlessh/archive/refs/heads/master.tar.gz" | bsdtar -xf- --strip-components 1 \
@@ -9,7 +9,7 @@ RUN curl -sSL "https://github.com/skeeto/endlessh/archive/refs/heads/master.tar.
     && strip /endlessh/endlessh
 
 
-FROM bitnami/minideb:latest AS catatonit
+FROM mirror.gcr.io/bitnami/minideb:latest AS catatonit
 RUN install_packages catatonit
 
 
