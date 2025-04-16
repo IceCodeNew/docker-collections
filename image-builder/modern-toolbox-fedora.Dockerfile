@@ -3,25 +3,27 @@
 FROM quay.io/fedora/fedora-minimal:latest AS base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG image_build_date=2024-06-23
-# http://bugs.python.org/issue19846
-# > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
 
 # RUN dnf install -y --setopt=install_weak_deps=False --repo=fedora --repo=updates 'dnf-command(download)' \
 #     && dnf config-manager --set-disabled fedora-cisco-openh264,fedora-modular,updates-modular \
 #     && dnf -y --allowerasing install 'dnf-command(versionlock)' \
 RUN microdnf -y --setopt=install_weak_deps=0 --disablerepo="*" --enablerepo=fedora --enablerepo=updates --best --nodocs install \
-        ca-certificates catatonit checksec coreutils curl gawk grep perl sed \
-        bsdtar parallel \
-        binutils cpp gcc gcc-c++ git-core m4 make pkgconf \
-        diffutils patch \
+        gzip isa-l-tools bsdtar tar \
+        binutils coreutils diffutils \
+        ca-certificates catatonit checksec curl \
+        gawk git-core grep \
+        libcap libtree \
+        parallel perl \
+        sed sudo \
+\
+        autoconf automake \
+        cpp gcc gcc-c++ \
         clang compiler-rt \
+        cmake ninja-build \
+        m4 make \
         mold \
         musl-clang musl-gcc musl-libc-static \
-        cmake ninja-build \
-        libtree \
-        libcap \
+        patch pkgconf \
         zlib-ng-compat-devel zlib-ng-compat-static \
     && microdnf -y --setopt=install_weak_deps=0 --disablerepo="*" --enablerepo=fedora --enablerepo=updates --best --nodocs upgrade \
     # && dnf -y autoremove $(dnf repoquery --installonly --latest-limit=-2 -q) \

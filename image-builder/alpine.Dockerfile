@@ -3,10 +3,6 @@
 FROM mirror.gcr.io/library/alpine:latest AS base
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 ARG image_build_date=2024-06-23
-# http://bugs.python.org/issue19846
-# > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
 
 RUN apk update; apk --no-progress --no-cache add \
         bash ca-certificates catatonit curl dos2unix file git grep libarchive-tools parallel pcre2-dev sed \
