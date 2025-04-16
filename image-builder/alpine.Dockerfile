@@ -20,15 +20,9 @@ RUN apk update; apk --no-progress --no-cache add \
     mkdir -p "$HOME/.parallel"; \
     touch "$HOME/.parallel/will-cite"
 
-ARG TARGETARCH
-RUN case "$TARGETARCH" in \
-        amd64) export protect_branch="-fcf-protection=full"; \
-               export CPU_CFLAGS="-march=x86-64-v2";; \
-        arm64) export protect_branch="-mbranch-protection=standard"; \
-               export CPU_CFLAGS="-march=armv8.2-a+crypto";; \
-            *) echo "unsupported architecture"; exit 1 ;; \
-    esac
+ARG CFLAGS
+ARG CXXFLAGS
+ENV CFLAGS="${CFLAGS:- -O2 -ftree-vectorize -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all}" \
+    CXXFLAGS="${CXXFLAGS:- -O2 -ftree-vectorize -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all}"
 ENV PKG_CONFIG="/usr/bin/pkgconf" \
-    LDFLAGS="-fuse-ld=mold" \
-    CFLAGS="-O2 -ftree-vectorize -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all" \
-    CXXFLAGS="-O2 -ftree-vectorize -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all"
+    LDFLAGS="-fuse-ld=mold"
