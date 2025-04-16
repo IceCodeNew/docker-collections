@@ -21,6 +21,18 @@ RUN ln -sf /bin/bash /emptydir/bin/sh \
     && install -Dpsv ./bash /emptydir/bin/bash
 
 
+FROM mirror.gcr.io/library/alpine:latest AS musl
+WORKDIR /emptydir/lib/
+ARG TARGETARCH
+RUN case "$TARGETARCH" in \
+        amd64) cp -a /lib/ld-musl-x86_64.so.1  /lib/libc.musl-x86_64.so.1  /emptydir/lib/;; \
+        arm64) cp -a /lib/ld-musl-aarch64.so.1 /lib/libc.musl-aarch64.so.1 /emptydir/lib/;; \
+            *) echo "unsupported architecture"; exit 1 ;; \
+    esac
+
+
 FROM scratch
 COPY --link --from=bash-builder /emptydir/bin/ /bin/
+COPY --link --from=musl         /emptydir/lib/ /lib/
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN /bin/bash --version || exit 1

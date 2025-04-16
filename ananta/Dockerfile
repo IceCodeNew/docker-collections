@@ -24,10 +24,14 @@ RUN apk update \
 
 FROM mirror.gcr.io/icecodexi/bash-static:latest AS bash-static
 FROM cgr.dev/chainguard/python:latest
+# bash + musl libc
+COPY --link --from=bash-static / /
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN /bin/bash --version || exit 1
+
 # toybox - bash -sh + catatonit
 COPY --link --from=assets /emptydir/usr/bin/    /usr/bin/
 COPY --link --chmod=0755 ./docker-entrypoint.sh /usr/bin/
-COPY --link --from=bash-static         /bin/        /bin/
 
 # be aware of the ownership of /home/nonroot/
 # refer to: https://github.com/moby/buildkit/issues/4964
