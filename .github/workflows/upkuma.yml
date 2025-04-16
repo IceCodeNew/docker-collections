@@ -6,7 +6,7 @@ on:
     - 'master'
     paths:
     - '.github/workflows/upkuma.yml'
-    - 'upkuma/**'
+    - 'upkuma/Dockerfile'
   schedule:
   - cron: "0 2 1-31/10 * *"
   workflow_dispatch:

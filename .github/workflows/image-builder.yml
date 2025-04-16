@@ -6,7 +6,7 @@ on:
     - 'release'
     paths:
     - '.github/workflows/image-builder.yml'
-    - 'image-builder/**'
+    - 'image-builder/*.Dockerfile'
   workflow_dispatch:
 
 env:

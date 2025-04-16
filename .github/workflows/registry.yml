@@ -6,7 +6,8 @@ on:
     - 'master'
     paths:
     - '.github/workflows/registry.yml'
-    - 'registry/**'
+    - 'registry/base.yaml'
+    - 'registry/Dockerfile'
   schedule:
   - cron: "10 3 1-31/10 * *"
   workflow_dispatch:

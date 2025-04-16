@@ -6,7 +6,7 @@ on:
     - 'release'
     paths:
     - '.github/workflows/caddy.yml'
-    - 'caddy/**'
+    - 'caddy/Dockerfile'
   workflow_dispatch:
 
 env:

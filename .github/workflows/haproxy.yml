@@ -6,7 +6,7 @@ on:
     - 'release'
     paths:
     - '.github/workflows/haproxy.yml'
-    - 'haproxy/**'
+    - 'haproxy/Dockerfile'
   workflow_dispatch:
 
 env:
