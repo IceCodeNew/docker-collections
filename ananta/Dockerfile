@@ -12,27 +12,26 @@ RUN uv tool install 'ananta[speed]'
 
 
 FROM mirror.gcr.io/tianon/toybox:latest AS toybox
-FROM mirror.gcr.io/library/alpine:latest AS assets
+FROM mirror.gcr.io/bitnami/minideb:latest AS assets
 COPY --link --from=toybox /usr/bin/ /emptydir/usr/bin/
-RUN rm -f /emptydir/usr/bin/bash /emptydir/usr/bin/sh
-RUN apk update \
-    && apk --no-progress --no-cache add \
+WORKDIR /emptydir/bin/
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN rm -f /emptydir/usr/bin/bash /emptydir/usr/bin/sh \
+    && install_packages \
+        bash-static \
         catatonit \
-    && rm -rf /var/cache/apk/* \
+    && cp -af /bin/bash-static   /emptydir/bin/bash \
+    && ln -sf /bin/bash          /emptydir/bin/sh \
     && cp -af /usr/bin/catatonit /emptydir/usr/bin/
 
 
-FROM mirror.gcr.io/icecodexi/bash-static:latest AS bash-static
 FROM cgr.dev/chainguard/python:latest
-# bash + musl libc
-COPY --link --from=bash-static / /
+# toybox + bash(ash) + catatonit
+COPY --link --from=assets /emptydir/ /
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN /bin/bash --version || exit 1
 
-# toybox - bash -sh + catatonit
-COPY --link --from=assets /emptydir/usr/bin/    /usr/bin/
-COPY --link --chmod=0755 ./docker-entrypoint.sh /usr/bin/
-
+COPY --link --chmod=0755 ./docker-entrypoint.sh /usr/local/bin/
 # be aware of the ownership of /home/nonroot/
 # refer to: https://github.com/moby/buildkit/issues/4964
 COPY --link --from=build --chown=65532:65532 /home/nonroot/ /home/nonroot/
@@ -40,4 +39,4 @@ COPY --link --from=build --chown=65532:65532 /home/nonroot/ /home/nonroot/
 ENV TZ=Asia/Taipei
 ENV PATH="/home/nonroot/.local/bin:${PATH}"
 
-ENTRYPOINT [ "/usr/bin/docker-entrypoint.sh" ]
+ENTRYPOINT [ "/usr/local/bin/docker-entrypoint.sh" ]
