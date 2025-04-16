@@ -11,24 +11,22 @@ ENV UV_COMPILE_BYTECODE=1 \
 RUN uv tool install 'ananta[speed]'
 
 
-FROM mirror.gcr.io/tianon/toybox:latest AS toybox
+FROM mirror.gcr.io/library/bash:latest AS bash
 FROM mirror.gcr.io/library/alpine:latest AS assets
-COPY --link --from=toybox /usr/bin/ /emptydir/usr/bin/
-RUN rm -f /emptydir/usr/bin/bash /emptydir/usr/bin/sh
+COPY --link --from=bash   /usr/local/           /emptydir/usr/local/
+COPY --link --chmod=0755 ./docker-entrypoint.sh /emptydir/usr/local/bin/
+WORKDIR /emptydir/bin/
 RUN apk update \
     && apk --no-progress --no-cache add \
         catatonit \
     && rm -rf /var/cache/apk/* \
-    && cp -af /usr/bin/catatonit /emptydir/usr/bin/
+    && cp -a /usr/bin/catatonit /emptydir/usr/local/bin/ \
+    && ln -sf /usr/local/bin/bash /emptydir/bin/bash \
+    && ln -sf /usr/local/bin/bash /emptydir/bin/sh
 
 
-FROM mirror.gcr.io/icecodexi/bash-static:latest AS bash-static
 FROM cgr.dev/chainguard/python:latest
-# toybox - bash -sh + catatonit
-COPY --link --from=assets /emptydir/usr/bin/    /usr/bin/
-COPY --link --chmod=0755 ./docker-entrypoint.sh /usr/bin/
-COPY --link --from=bash-static         /bin/        /bin/
-
+COPY --link --from=assets /emptydir/ /
 # be aware of the ownership of /home/nonroot/
 # refer to: https://github.com/moby/buildkit/issues/4964
 COPY --link --from=build --chown=65532:65532 /home/nonroot/ /home/nonroot/
@@ -36,4 +34,4 @@ COPY --link --from=build --chown=65532:65532 /home/nonroot/ /home/nonroot/
 ENV TZ=Asia/Taipei
 ENV PATH="/home/nonroot/.local/bin:${PATH}"
 
-ENTRYPOINT [ "/usr/bin/docker-entrypoint.sh" ]
+ENTRYPOINT [ "/usr/local/bin/docker-entrypoint.sh" ]
