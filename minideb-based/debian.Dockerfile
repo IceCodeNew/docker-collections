@@ -2,7 +2,6 @@
 
 FROM mirror.gcr.io/bitnami/minideb:latest AS debian-base
 ARG TARGETARCH
-ARG image_build_date=2025-04-17
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN install_packages \
