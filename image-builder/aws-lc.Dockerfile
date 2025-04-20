@@ -28,9 +28,7 @@ FROM golang-builder AS aws-lc-builder
 ARG aws_lc_latest_tag=v1.30.1
 ARG REPOPATH="github.com/aws/aws-lc"
 WORKDIR /go/src/${REPOPATH}/
-RUN git clone -j "$(nproc)" --no-tags --shallow-submodules --recurse-submodules --depth 1 --single-branch \
-        --branch "${aws_lc_latest_tag:=main}" \
-        "https://${REPOPATH}" ./
+ADD --link "https://${REPOPATH}.git#${aws_lc_latest_tag}" ./
 
 ENV CC=clang \
     CXX=clang++

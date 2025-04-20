@@ -9,10 +9,7 @@ RUN curl -sSL "https://github.com/skeeto/endlessh/archive/refs/heads/master.tar.
     && strip /endlessh/endlessh
 
 
-FROM mirror.gcr.io/bitnami/minideb:latest AS catatonit
-RUN install_packages catatonit
-
-
+FROM mirror.gcr.io/icecodexi/bash-toybox:latest AS catatonit
 FROM gcr.io/distroless/static:nonroot
 COPY --link --from=build-env --chmod=755 /endlessh/endlessh /usr/local/bin/
 COPY --link --from=catatonit             /usr/bin/catatonit /usr/bin/

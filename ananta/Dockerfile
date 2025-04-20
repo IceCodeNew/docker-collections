@@ -4,23 +4,11 @@ FROM mirror.gcr.io/icecodexi/python:debian-nonroot AS build
 RUN uv tool install 'ananta[speed]'
 
 
-FROM mirror.gcr.io/tianon/toybox:latest AS toybox
-FROM mirror.gcr.io/bitnami/minideb:latest AS assets
-COPY --link --from=toybox /usr/bin/ /emptydir/usr/bin/
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN rm -f /emptydir/usr/bin/bash /emptydir/usr/bin/sh \
-    && install_packages \
-        bash-static \
-        catatonit \
-    && cp -af /bin/bash-static   /emptydir/usr/bin/bash \
-    && ln -sf /usr/bin/bash      /emptydir/usr/bin/sh \
-    && cp -af /usr/bin/catatonit /emptydir/usr/bin/
-
-
+FROM mirror.gcr.io/icecodexi/bash-toybox:latest AS assets
 FROM gcr.io/distroless/python3:latest
 COPY --link --chmod=0755 ./docker-entrypoint.sh /usr/local/bin/
 # toybox + bash(ash) + catatonit
-COPY --link --from=assets /emptydir/            /
+COPY --link --from=assets /usr/bin/             /usr/bin/
 COPY --link --from=build  /home/nonroot/.local/ /home/nonroot/.local/
 
 SHELL ["/usr/bin/bash", "-o", "pipefail", "-c"]
