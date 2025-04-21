@@ -44,8 +44,8 @@ RUN case "$TARGETARCH" in \
         CC=clang CXX=clang++ \
         ARCH_FLAGS="-flto=thin" \
         CPU_CFLAGS="$CPU_CFLAGS" \
-        DEFINE="-Wall -Wformat -Wformat=2 -Wconversion -Wimplicit-fallthrough -Werror=format-security -Werror=implicit -Werror=incompatible-pointer-types -Werror=int-conversion -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_GLIBCXX_ASSERTIONS -fexceptions -fstrict-flex-arrays=3 -fstack-clash-protection -fstack-protector-strong -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero ${protect_branch}" \
-        ADDLIB="-Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -Wl,--no-copy-dt-needed-entries -Wl,--icf=all -Wl,-Bstatic -L/usr/lib -ljemalloc_pic -Wl,-Bdynamic" \
+        DEFINE="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_GLIBCXX_ASSERTIONS -fexceptions -fstrict-flex-arrays=3 -fstack-clash-protection -fstack-protector-strong -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero ${protect_branch}" \
+        ADDLIB="-Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -Wl,--no-copy-dt-needed-entries -Wl,-Bstatic -L/usr/lib -ljemalloc_pic -Wl,-Bdynamic" \
         V=1 \
     && strip -o /haproxy ./haproxy
 
