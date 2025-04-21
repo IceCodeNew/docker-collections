@@ -15,6 +15,7 @@ docker run --rm --interactive --tty \
     --volume "${HOME}/.ssh/:/home/nonroot/.ssh/:ro" \
     --volume "$(pwd)/hosts.csv:/home/nonroot/hosts.csv:ro" \
     --cpu-shares 512 --memory 512M --memory-swap 512M \
+    --security-opt no-new-privileges \
     icecodexi/ananta:latest \
         --help
 ```
