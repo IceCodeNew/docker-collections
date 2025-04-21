@@ -1,17 +1,7 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
 FROM icecodexi/image-builder:alpine AS step0_prepare
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG image_build_date=2024-06-23
-
-## pre-defined envs
-# ENV LANG=C.UTF-8 \
-#     LC_ALL=C.UTF-8
-# ENV PKG_CONFIG="/usr/bin/pkgconf" \
-#     LDFLAGS="-fuse-ld=mold" \
-#     CFLAGS="-O2 -ftree-vectorize -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all" \
-#     CXXFLAGS="-O2 -ftree-vectorize -pipe -D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch} ${CPU_CFLAGS} -g -grecord-gcc-switches -Wl,-z,noexecstack,-z,relro,-z,now,-z,defs -Wl,--icf=all"
-
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
@@ -53,10 +43,9 @@ RUN case "$TARGETARCH" in \
         USE_PIE=1 USE_STACKPROTECTOR=1 USE_RELRO_NOW=1 \
         CC=clang CXX=clang++ \
         ARCH_FLAGS="-flto=thin" \
-        OPT_CFLAGS="-O2 -ftree-vectorize" \
         CPU_CFLAGS="$CPU_CFLAGS" \
-        DEFINE="-D_FORTIFY_SOURCE=2 -fexceptions -fstack-clash-protection -fstack-protector-strong ${protect_branch}" \
-        ADDLIB="-Wl,-Bstatic -L/usr/lib -ljemalloc_pic -Wl,-Bdynamic" \
+        DEFINE="-Wall -Wformat -Wformat=2 -Wconversion -Wimplicit-fallthrough -Werror=format-security -Werror=implicit -Werror=incompatible-pointer-types -Werror=int-conversion -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_GLIBCXX_ASSERTIONS -fexceptions -fstrict-flex-arrays=3 -fstack-clash-protection -fstack-protector-strong -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero ${protect_branch}" \
+        ADDLIB="-Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -Wl,--no-copy-dt-needed-entries -Wl,--icf=all -Wl,-Bstatic -L/usr/lib -ljemalloc_pic -Wl,-Bdynamic" \
         V=1 \
     && strip -o /haproxy ./haproxy
 
