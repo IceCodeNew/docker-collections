@@ -34,7 +34,8 @@ RUN case "$TARGETARCH" in \
             *) echo "unsupported architecture"; exit 1 ;; \
     esac \
     && unset CFLAGS CXXFLAGS LDFLAGS \
-    && make -j "$(nproc)" TARGET=linux-musl \
+    && mold -run \
+        make -j "$(nproc)" TARGET=linux-musl \
         USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 \
         USE_OPENSSL_AWSLC=1 USE_QUIC=1 \
         SSL_INC="/aws-lc-install/include" SSL_LIB="/aws-lc-install/lib" \
