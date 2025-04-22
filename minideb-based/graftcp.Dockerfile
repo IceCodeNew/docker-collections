@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM mirror.gcr.io/icecodexi/image-builder:debian AS graftcp-builder
+FROM mirror.gcr.io/icecodexi/image-builder:modern-toolbox-fedora AS graftcp-builder
 ARG TARGETARCH
 ENV GOLANG_VERSION=1.24.2 \
     PATH="/usr/local/go/bin:${PATH}"
@@ -14,6 +14,7 @@ ADD --link "https://github.com/hmgle/graftcp.git" ./
 RUN go env -w GOFLAGS="$GOFLAGS -buildmode=pie" \
     && go env -w GO111MODULE=on \
     && go env -w GOAMD64=v2 \
+    && go env -w GOARM64=v8.2 \
     && make \
         LDFLAGS="-fuse-ld=mold -static-pie" \
         GO_LDFLAGS="-s -w -linkmode external '-extldflags=-fuse-ld=mold -static-pie'" \
