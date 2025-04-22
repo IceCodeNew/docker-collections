@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM mirror.gcr.io/icecodexi/image-builder:modern-toolbox-fedora AS graftcp-builder
+FROM mirror.gcr.io/icecodexi/image-builder:debian AS graftcp-builder
 ARG TARGETARCH
 ENV GOLANG_VERSION=1.24.2 \
     PATH="/usr/local/go/bin:${PATH}"
