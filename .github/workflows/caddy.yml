@@ -56,6 +56,7 @@ jobs:
               --with github.com/caddy-dns/cloudflare@master \
               --with github.com/mholt/caddy-l4@master \
               --with github.com/caddyserver/cache-handler \
+              --with github.com/caddyserver/replace-response \
               --output ./caddy
       - name: Install
         run: |
