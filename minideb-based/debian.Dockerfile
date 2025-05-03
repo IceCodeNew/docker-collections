@@ -29,7 +29,7 @@ RUN mold_latest_tag_name=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-m
             *) echo "unsupported architecture"; exit 1 ;; \
     esac \
     && curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 \
-        -- "https://ghfast.top/https://github.com/rui314/mold/releases/download/${mold_latest_tag_name}/${_filename}" \
+        -- "https://github.com/rui314/mold/releases/download/${mold_latest_tag_name}/${_filename}" \
             | tar -xzf- --strip-components 1 -C /usr \
     && update-alternatives --install /usr/bin/ld ld /usr/bin/ld.mold 100 \
     && update-alternatives --auto ld
