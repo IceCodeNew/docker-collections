@@ -1,5 +1,0 @@
-#!/bin/sh
-
-# A dummy tr implementation that only repeats input stream
-# so as to get rid of the requirements of coreutils
-cat -
