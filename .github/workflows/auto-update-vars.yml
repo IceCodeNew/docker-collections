@@ -32,19 +32,19 @@ jobs:
           token: "${{ secrets.UPDATE_WORKFLOW_TOKEN }}"
       - name: Set some variables
         shell: bash
+        env:
+          CACHED_GITHUB_API: ${{ secrets.GH_API_BASEURL }}
         run: |
           set -x
-          GITHUB_API_BASEURL='https://api.github.com'
-          TMP_FILE=$(mktemp)
-          if curl -sS -i -I -H "Accept: application/vnd.github.v3+json" -o "$TMP_FILE" -- 'https://github-cache.yingmale.win/api/'; then
-              HTTP_STATUS_CODE=$(awk 'NR==1 {print $2}' "$TMP_FILE")
+          if HTTP_STATUS_CODE=$(
+              curl -fsSL -H "Accept: application/vnd.github.v3+json" -I -o /dev/null -w "%{http_code}" -- "${CACHED_GITHUB_API}/"
+          ); then
               if [[ $HTTP_STATUS_CODE -ge 200 ]] && [[ $HTTP_STATUS_CODE -le 299 ]]; then
-                  GITHUB_API_BASEURL='https://github-cache.yingmale.win/api'
-                  echo "info: github cache is ready, will use ${GITHUB_API_BASEURL} as GITHUB_API_BASEURL."
+                  GITHUB_API_BASEURL="${CACHED_GITHUB_API}"
+                  echo "info: GitHub cache is ready."
               fi
           fi
-          "rm" -f "$TMP_FILE"
-          export GITHUB_API_BASEURL
+          : "${GITHUB_API_BASEURL:=https://api.github.com}"
 
           CADDY_VERSION=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
               "${GITHUB_API_BASEURL}/repos/caddyserver/caddy/releases/latest" \
