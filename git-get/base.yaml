@@ -1,0 +1,39 @@
+contents:
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+  repositories:
+    - https://packages.wolfi.dev/os
+  packages:
+    - bash
+    - bash-completion
+    - busybox
+    - ca-certificates-bundle
+    - curl
+    - git
+    - git-completion
+    - glibc-locale-posix
+    - gnutar
+    - grep
+    - sed
+    - tzdata
+    - wolfi-baselayout
+    - xz
+
+accounts:
+  groups:
+    - groupname: nonroot
+      gid: 65532
+  users:
+    - username: nonroot
+      uid: 65532
+      shell: /bin/bash
+  run-as: nonroot
+
+environment:
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+  TZ: Asia/Taipei
+
+archs:
+- x86_64
+- aarch64
