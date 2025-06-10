@@ -45,7 +45,7 @@ jobs:
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.31.0
         with:
           image-ref: "${{ secrets.DOCKERHUB_USERNAME }}/qbittorrent-nox:latest"
           format: 'table'
