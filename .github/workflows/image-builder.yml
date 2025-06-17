@@ -1,4 +1,6 @@
 name: Builder Image
+permissions:
+  contents: read
 
 on:
   push:
@@ -24,17 +26,17 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./aws-lc.Dockerfile"
@@ -48,16 +50,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/aws-lc-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/aws-lc-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/aws-lc-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: aws-lc-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/aws-lc-digests/*
@@ -71,30 +73,35 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/aws-lc-digests/
           pattern: aws-lc-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/aws-lc-digests/
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:aws-lc \
-              $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:aws-lc" \
+              $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:aws-lc \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:aws-lc" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
 
   modern-toolbox-fedora:
@@ -108,17 +115,17 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./modern-toolbox-fedora.Dockerfile"
@@ -129,16 +136,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/modern-toolbox-fedora-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/modern-toolbox-fedora-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/modern-toolbox-fedora-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: modern-toolbox-fedora-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/modern-toolbox-fedora-digests/*
@@ -152,34 +159,39 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/modern-toolbox-fedora-digests/
           pattern: modern-toolbox-fedora-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/modern-toolbox-fedora-digests/
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora \
-              $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:modern-toolbox-fedora" \
+              $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:modern-toolbox-fedora" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
           image-ref: "${{ env.REGISTRY_IMAGE }}:modern-toolbox-fedora"
           format: 'table'
@@ -195,17 +207,17 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./alpine.Dockerfile"
@@ -216,16 +228,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/alpine-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/alpine-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/alpine-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: alpine-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/alpine-digests/*
@@ -239,34 +251,39 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/alpine-digests/
           pattern: alpine-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/alpine-digests/
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:alpine \
-              $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:alpine" \
+              $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:alpine \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:alpine" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
           image-ref: "${{ env.REGISTRY_IMAGE }}:alpine"
           format: 'table'
@@ -282,17 +299,17 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./endlessh.Dockerfile"
@@ -303,16 +320,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/endlessh-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/endlessh-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/endlessh-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: endlessh-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/endlessh-digests/*
@@ -326,34 +343,39 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/endlessh-digests/
           pattern: endlessh-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/endlessh-digests/
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:endlessh \
-              $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:endlessh" \
+              $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:endlessh \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:endlessh" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
           image-ref: "${{ env.REGISTRY_IMAGE }}:endlessh"
           format: 'table'

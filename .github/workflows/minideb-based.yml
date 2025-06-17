@@ -1,4 +1,6 @@
 name: minideb-based images
+permissions:
+  contents: read
 
 on:
   push:
@@ -23,17 +25,17 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: "{{defaultContext}}:minideb-based"
           file: "./debian.Dockerfile"
@@ -44,16 +46,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ secrets.DOCKERHUB_USERNAME }}/image-builder,push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/debian-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/debian-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/debian-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: debian-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/debian-digests/*
@@ -67,34 +69,39 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/debian-digests/
           pattern: debian-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/debian-digests/
+        env:
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker buildx imagetools create --tag ${{ secrets.DOCKERHUB_USERNAME }}/image-builder:debian \
-              $(printf '${{ secrets.DOCKERHUB_USERNAME }}/image-builder@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REPOSITORY}/image-builder:debian" \
+              $(printf "${REPOSITORY}/image-builder@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ secrets.DOCKERHUB_USERNAME }}/image-builder:debian \
+          docker buildx imagetools inspect "${REPOSITORY}/image-builder:debian" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
           image-ref: "${{ secrets.DOCKERHUB_USERNAME }}/image-builder:debian"
           format: 'table'
@@ -110,10 +117,10 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -128,7 +135,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           build-args: GOLANG_VERSION=${{ env.golang_latest_tag_name }}
           context: "{{defaultContext}}:minideb-based"
@@ -140,16 +147,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ secrets.DOCKERHUB_USERNAME }}/graftcp,push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/graftcp-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/graftcp-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/graftcp-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: graftcp-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/graftcp-digests/*
@@ -163,30 +170,35 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/graftcp-digests/
           pattern: graftcp-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/graftcp-digests/
+        env:
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker buildx imagetools create --tag ${{ secrets.DOCKERHUB_USERNAME }}/graftcp:latest \
-              $(printf '${{ secrets.DOCKERHUB_USERNAME }}/graftcp@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REPOSITORY}/graftcp:latest" \
+              $(printf "${REPOSITORY}/graftcp@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ secrets.DOCKERHUB_USERNAME }}/graftcp:latest \
+          docker buildx imagetools inspect "${REPOSITORY}/graftcp:latest" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
 
   python-nonroot:
@@ -200,17 +212,17 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: "{{defaultContext}}:minideb-based"
           file: "./python_debian-nonroot.Dockerfile"
@@ -221,16 +233,16 @@ jobs:
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ secrets.DOCKERHUB_USERNAME }}/python,push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
         run: |
           mkdir -p /tmp/python-nonroot-digests/
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/python-nonroot-digests/${digest#sha256:}"          
-
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          touch "/tmp/python-nonroot-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: python-nonroot-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/python-nonroot-digests/*
@@ -244,34 +256,39 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: /tmp/python-nonroot-digests/
           pattern: python-nonroot-digests-*
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
       -
         name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Create manifest list and push
         working-directory: /tmp/python-nonroot-digests/
+        env:
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker buildx imagetools create --tag ${{ secrets.DOCKERHUB_USERNAME }}/python:debian-nonroot \
-              $(printf '${{ secrets.DOCKERHUB_USERNAME }}/python@sha256:%s ' *)          
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REPOSITORY}/python:debian-nonroot" \
+              $(printf "${REPOSITORY}/python@sha256:%s " *)
       -
         name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          docker buildx imagetools inspect ${{ secrets.DOCKERHUB_USERNAME }}/python:debian-nonroot \
+          docker buildx imagetools inspect "${REPOSITORY}/python:debian-nonroot" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
           image-ref: "${{ secrets.DOCKERHUB_USERNAME }}/python:debian-nonroot"
           format: 'table'
