@@ -213,7 +213,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:minideb-based"
-          file: "./python:debian-nonroot.Dockerfile"
+          file: "./python_debian-nonroot.Dockerfile"
           push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}
