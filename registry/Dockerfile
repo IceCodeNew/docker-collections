@@ -1,10 +1,10 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM mirror.gcr.io/library/registry:2 AS source
+FROM mirror.gcr.io/library/registry:3 AS source
 FROM icecodexi/registry:base AS assets
 WORKDIR /emptydir/
-COPY --from=source --chown=nonroot:nonroot /etc/docker/registry/ \
-                   ./etc/docker/registry/
+COPY --from=source --chown=nonroot:nonroot /etc/distribution/ \
+                   ./etc/distribution/
 COPY --from=source /entrypoint.sh /bin/registry \
                    ./usr/bin/
 
@@ -25,4 +25,4 @@ EXPOSE 5000
 
 ENTRYPOINT [ "catatonit", "--", "/usr/bin/entrypoint.sh" ]
 
-CMD [ "/etc/docker/registry/config.yml" ]
+CMD [ "/etc/distribution/config.yml" ]

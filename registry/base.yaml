@@ -26,7 +26,7 @@ environment:
   TZ: Asia/Taipei
 
 paths:
-  - path: /etc/docker/
+  - path: /etc/distribution/
     type: directory
     uid: 65532
     gid: 65532
