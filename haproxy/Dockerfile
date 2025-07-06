@@ -15,7 +15,7 @@ COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /aws-lc-insta
 
 
 FROM step0_prepare AS haproxy
-ARG haproxy_branch=3.0
+ARG haproxy_branch=3.2
 ARG dockerfile_workdir=/build_root/haproxy/
 WORKDIR "$dockerfile_workdir"
 RUN unset -f curl \
@@ -53,7 +53,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM mirror.gcr.io/library/haproxy:3.0-alpine AS assets
+FROM mirror.gcr.io/library/haproxy:3.2-alpine AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \
