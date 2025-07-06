@@ -53,7 +53,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM mirror.gcr.io/library/haproxy:3.0-alpine AS assets
+FROM mirror.gcr.io/library/haproxy:3.2-alpine AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \
