@@ -1,0 +1,44 @@
+name: gg Image CI
+permissions: {}
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - '.github/workflows/gg.yml'
+  schedule:
+  - cron: "0 3 1 * *"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          repository: 'IceCodeNew/gg'
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+
+      - name: pre-start
+        shell: bash
+        run: |
+          curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
+          curl -o '.ko.yaml' -- \
+              https://raw.githubusercontent.com/IceCodeNew/docker-collections/master/default.ko.yaml
+
+      - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+        env:
+          KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/gg
+      - run: ko build --platform=linux/amd64,linux/arm64 --bare .
