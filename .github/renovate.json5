@@ -9,4 +9,13 @@
     ":pinDevDependencies",
     "security:openssf-scorecard",
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.markitdown_version$/"],
+      "matchStrings": ["(?<currentValue>.*?)\\n"],
+      "depNameTemplate": "markitdown",
+      "datasourceTemplate": "pypi",
+    },
+  ],
 }
