@@ -5,7 +5,6 @@ FROM mirror.gcr.io/bitnami/minideb:latest
 RUN install_packages \
         ca-certificates catatonit \
         libpython3-stdlib python3-minimal \
-        python3-distutils \
         tzdata \
         zlib1g \
 \
