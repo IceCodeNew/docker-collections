@@ -1,0 +1,135 @@
+name: iproute2 Image CI
+permissions: {}
+
+on:
+  push:
+    branches:
+    - 'master'
+    paths:
+    - '.github/workflows/iproute2.yml'
+    - 'iproute2/Dockerfile'
+  schedule:
+  - cron: "40 8 1-31/10 * *"
+  workflow_dispatch:
+
+env:
+  iproute2_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/iproute2
+
+jobs:
+  iproute2:
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Chores (generate envs)
+        id: chores
+        env:
+          CACHED_GITHUB_API: ${{ secrets.GH_API_BASEURL }}
+        run: |
+          set -e -o pipefail
+          set -x
+          if HTTP_STATUS_CODE=$(
+              curl -fsSL -H "Accept: application/vnd.github.v3+json" -I -o /dev/null -w "%{http_code}" -- "${CACHED_GITHUB_API}/"
+          ); then
+              if [[ $HTTP_STATUS_CODE -ge 200 ]] && [[ $HTTP_STATUS_CODE -le 299 ]]; then
+                  GITHUB_API_BASEURL="${CACHED_GITHUB_API}"
+                  echo "info: GitHub cache is ready."
+              fi
+          fi
+          : "${GITHUB_API_BASEURL:=https://api.github.com}"
+
+          iproute2_latest_tag=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
+              "${GITHUB_API_BASEURL}/repos/iproute2/iproute2/tags?per_page=100" \
+              | grep -F 'name' | cut -d'"' -f4 | grep -ivE 'alpha|beta|fips|rc|test|week' \
+              | sort -Vu | tail -n 1)
+
+          echo "iproute2_latest_tag=${iproute2_latest_tag}" >> "$GITHUB_OUTPUT"
+          set +x
+      -
+        name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          build-args: |
+            iproute2_latest_tag=${{ steps.chores.outputs.iproute2_latest_tag }}
+          context: "{{defaultContext}}:iproute2"
+          push: true
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.iproute2_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+      -
+        name: Export digest
+        env:
+          digest: ${{ steps.build.outputs.digest }}
+          platform: ${{ matrix.platform }}
+        run: |
+          mkdir -p /tmp/iproute2-digests/
+          touch "/tmp/iproute2-digests/${digest#sha256:}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
+      -
+        name: Upload digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: iproute2-digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/iproute2-digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  iproute2-multiarch:
+    runs-on: ubuntu-24.04
+    needs:
+      - iproute2
+    steps:
+      -
+        name: Download digests
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          path: /tmp/iproute2-digests/
+          pattern: iproute2-digests-*
+          merge-multiple: true
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Create manifest list and push
+        working-directory: /tmp/iproute2-digests/
+        env:
+          REGISTRY_IMAGE: ${{ env.iproute2_IMAGE }}
+        run: |
+          # shellcheck disable=SC2046
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:latest" \
+              $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
+      -
+        name: Inspect image
+        env:
+          REGISTRY_IMAGE: ${{ env.iproute2_IMAGE }}
+        run: |
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:latest" \
+              | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
+      -
+        name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: "${{ env.iproute2_IMAGE }}:latest"
+          format: 'table'
