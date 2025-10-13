@@ -9,11 +9,18 @@ if [[ -z "${ARCHIVIST}" ]]; then
     exit 1
 fi
 
+workloads=("$@")
+if [[ "${#workloads[@]}" -le 0 ]]; then
+    echo "FATAL: No workloads provided"
+    exit 1
+fi
+
 gg config -w "subscription=${subscription_url}"
 host='ipinfo.io'
-set -ex
 
+# shellcheck disable=SC2016
 gg bash -c "
+set -ex
 echo '
 GET / HTTP/1.1
 Host: ${host}
@@ -21,10 +28,11 @@ User-Agent: curl/7.76.1
 Accept: */*
 ' | nc ${host} 80
 
-'/ko-app/acdanmaku' &
-'/home/nonroot/.local/bin/aixifan_videoinfo' &
-'/home/nonroot/.local/bin/lowapk' &
+for w in ${workloads[*]}; do"'
+    echo "Starting workload: ${w}"
+    "${w}" &
+done
 
 wait -n
 exit $?
-"
+'
