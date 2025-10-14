@@ -14,11 +14,15 @@ RUN cp -a /usr/lib/libmimalloc-secure.so* \
           /emptydir/usr/lib/
 
 
-FROM icecodexi/gg:latest          AS gg
-FROM icecodexi/bash-toybox:latest AS bash-toybox
-COPY --link --from=assets /emptydir/ /
-COPY --link --from=gg     /ko-app/gg /usr/local/bin/
+FROM cgr.dev/chainguard/bash:latest AS bash
+FROM icecodexi/gg:latest            AS gg
+FROM icecodexi/bash-toybox:latest
 RUN    /usr/bin/toybox ln -sf \
     /usr/bin/toybox /usr/bin/nc \
     && /usr/bin/toybox ln -sf \
     /usr/bin/toybox /usr/bin/env
+
+COPY --link --from=assets /emptydir/ /
+COPY --link --from=gg     /ko-app/gg /usr/local/bin/
+# This will break all following RUN commands
+COPY --link --from=bash /usr/bin/bash /usr/bin/
