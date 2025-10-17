@@ -6,10 +6,10 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN --mount=type=bind,from=src_dir,source=./package.json,target=./package.json \
     --mount=type=bind,from=src_dir,source=./bun.lock,target=./bun.lock \
     bun install --frozen-lockfile --production --ignore-scripts --no-cache
-COPY --link --from=src_dir --chown=1000:1000 \
-    ./dist/         ./dist/
 COPY --link --from=src_dir --chown=1000:1000 --chmod=755 \
     ./entrypoint.sh ./entrypoint.sh
+COPY --link --from=builder --chown=1000:1000 \
+    ./              ./dist/
 
 RUN apk update; apk --no-progress --no-cache add \
         bash ca-certificates catatonit; \
