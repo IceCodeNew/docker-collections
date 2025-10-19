@@ -24,5 +24,5 @@ COPY --link --from=lowapk  --chown=65532:65532 \
 WORKDIR /var/run/ko/
 WORKDIR /home/nonroot/
 # docker run --cap-add=SYS_PTRACE --user root:root
-ENTRYPOINT [ "/home/nonroot/entrypoint.sh" ]
+ENTRYPOINT [ "catatonit", "--", "/home/nonroot/entrypoint.sh" ]
 CMD [ "/ko-app/acdanmaku", "/home/nonroot/.local/bin/lowapk" ]
