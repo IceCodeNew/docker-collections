@@ -1,4 +1,4 @@
-name: gg Image CI
+name: dummy-https-proxy-sub Image CI
 permissions: {}
 
 on:
@@ -6,7 +6,7 @@ on:
     branches:
     - 'master'
     paths:
-    - '.github/workflows/gg.yml'
+    - '.github/workflows/dummy-https-proxy-sub.yml'
   schedule:
   - cron: "0 4 1 * *"
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-          repository: 'IceCodeNew/gg'
+          repository: "IceCodeNew/dummy-https-proxy-sub"
 
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
@@ -40,5 +40,5 @@ jobs:
 
       - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
         env:
-          KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/gg
-      - run: ko build --platform=linux/amd64,linux/arm64 --bare .
+          KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/dummy-https-proxy-sub
+      - run: ko build --platform=linux/amd64,linux/arm64 --bare ./cmd/...
