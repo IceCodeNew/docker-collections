@@ -58,7 +58,7 @@ jobs:
           echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: aws-lc-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/aws-lc-digests/*
@@ -72,7 +72,7 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: /tmp/aws-lc-digests/
           pattern: aws-lc-digests-*
@@ -144,7 +144,7 @@ jobs:
           echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: modern-toolbox-fedora-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/modern-toolbox-fedora-digests/*
@@ -158,7 +158,7 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: /tmp/modern-toolbox-fedora-digests/
           pattern: modern-toolbox-fedora-digests-*
@@ -236,7 +236,7 @@ jobs:
           echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: alpine-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/alpine-digests/*
@@ -250,7 +250,7 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: /tmp/alpine-digests/
           pattern: alpine-digests-*
@@ -328,7 +328,7 @@ jobs:
           echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       -
         name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: endlessh-digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/endlessh-digests/*
@@ -342,7 +342,7 @@ jobs:
     steps:
       -
         name: Download digests
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           path: /tmp/endlessh-digests/
           pattern: endlessh-digests-*
