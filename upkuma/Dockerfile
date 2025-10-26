@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
-FROM mirror.gcr.io/louislam/uptime-kuma:1 AS uptime-kuma
+FROM mirror.gcr.io/louislam/uptime-kuma:2 AS uptime-kuma
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && echo 'force-unsafe-io' > '/etc/dpkg/dpkg.cfg.d/docker-apt-speedup' \
