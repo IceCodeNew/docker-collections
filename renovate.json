@@ -1,0 +1,33 @@
+{
+  "forkProcessing": "enabled",
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.markitdown_version$/"],
+      "matchStrings": ["(?<currentValue>.*?)\\n"],
+      "depNameTemplate": "markitdown",
+      "datasourceTemplate": "pypi"
+    }
+  ],
+  "extends": [
+    "config:best-practices",
+    "group:allNonMajor",
+    "group:githubArtifactActions",
+    "group:linters",
+    "schedule:earlyMondays",
+    "security:openssf-scorecard"
+  ],
+  "ignorePresets": ["docker:pinDigests"],
+  "packageRules": [
+    {
+      // MUST have a matching criteria
+      "matchPackageNames": ["*"],
+
+      // followed by the actions. Both the matching and actions are mandatory.
+      "minimumReleaseAge": "3 days",
+      "internalChecksFilter": "strict"
+    }
+  ],
+  "timezone": "Asia/Shanghai"
+}
