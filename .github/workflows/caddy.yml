@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/caddy
-  CADDY_VERSION: v2.8.4
+  CADDY_VERSION: v2.10.2
 
 jobs:
   images:

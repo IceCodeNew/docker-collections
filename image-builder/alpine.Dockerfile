@@ -2,7 +2,7 @@
 
 FROM mirror.gcr.io/library/alpine:latest AS base
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-ARG image_build_date=2024-06-23
+ARG image_build_date=2025-12-11
 RUN apk update; apk --no-progress --no-cache add \
         bash ca-certificates catatonit curl dos2unix file git grep libarchive-tools parallel pcre2-dev sed \
         python3 \

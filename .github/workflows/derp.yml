@@ -11,7 +11,7 @@ on:
 
 
 env:
-  TAILSCALE_VERSION: v1.68.0
+  TAILSCALE_VERSION: v1.92.2
 
 jobs:
   publish:

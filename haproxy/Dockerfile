@@ -1,7 +1,7 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1
 
 FROM icecodexi/image-builder:alpine AS step0_prepare
-ARG image_build_date=2024-06-23
+ARG image_build_date=2025-12-11
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \

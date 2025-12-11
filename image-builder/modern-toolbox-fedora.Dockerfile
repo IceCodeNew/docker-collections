@@ -2,7 +2,7 @@
 
 FROM quay.io/fedora/fedora-minimal:latest AS base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG image_build_date=2024-06-23
+ARG image_build_date=2025-12-11
 
 # RUN dnf install -y --setopt=install_weak_deps=False --repo=fedora --repo=updates 'dnf-command(download)' \
 #     && dnf config-manager --set-disabled fedora-cisco-openh264,fedora-modular,updates-modular \
