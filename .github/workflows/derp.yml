@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
-          curl -o '.ko.yaml' -- \
+          curl -o '/tmp/.ko.yaml' -- \
               https://raw.githubusercontent.com/IceCodeNew/docker-collections/master/default.ko.yaml
 
       - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
@@ -51,3 +51,5 @@ jobs:
         env:
           KO_DOCKER_REPO: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/derpprobe
       - run: ko build --platform=linux/amd64,linux/arm64 --bare ./cmd/derpprobe
+        env:
+          KO_CONFIG_PATH: /tmp/.ko.yaml
