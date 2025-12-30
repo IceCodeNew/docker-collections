@@ -8,6 +8,7 @@ on:
     paths:
     - '.github/workflows/auto-update-vars.yml'
     - '.github/workflows/caddy.yml'
+    - '.github/workflows/CLIProxyAPI.yml'
     - '.github/workflows/copilot-api.yml'
     - '.github/workflows/haproxy.yml'
     - '.github/workflows/image-builder.yml'
@@ -54,6 +55,10 @@ jobs:
               "${GITHUB_API_BASEURL}/repos/caddyserver/caddy/releases/latest" \
               | grep -F 'tag_name' | cut -d'"' -f4)
 
+          CLIPROXYAPI_VERSION=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
+              "${GITHUB_API_BASEURL}/repos/router-for-me/CLIProxyAPI/releases/latest" \
+              | grep -F 'tag_name' | cut -d'"' -f4)
+
           COPILOT_API_VERSION=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
               "${GITHUB_API_BASEURL}/repos/ericc-ch/copilot-api/releases/latest" \
               | grep -F 'tag_name' | cut -d'"' -f4)
@@ -78,6 +83,7 @@ jobs:
 
           echo "
           CADDY_VERSION=${CADDY_VERSION}
+          CLIPROXYAPI_VERSION=${CLIPROXYAPI_VERSION}
           COPILOT_API_VERSION=${COPILOT_API_VERSION}
           HAPROXY_VERSION=${HAPROXY_VERSION}
           PIKNIK_VERSION=${PIKNIK_VERSION}
@@ -100,6 +106,7 @@ jobs:
 
           _files=(
               ./.github/workflows/caddy.yml
+              ./.github/workflows/CLIProxyAPI.yml
               ./.github/workflows/copilot-api.yml
               ./.github/workflows/derp.yml
               ./.github/workflows/piknik.yml
@@ -114,6 +121,7 @@ jobs:
           sed -i -E \
               -e "s/CADDY_VERSION: .+/CADDY_VERSION: ${CADDY_VERSION:?empty value}/" \
               -e "s/^ARG CADDY_VERSION=.*/ARG CADDY_VERSION=${CADDY_VERSION:?empty value}/" \
+              -e "s/CLIPROXYAPI_VERSION: .+/CLIPROXYAPI_VERSION: ${CLIPROXYAPI_VERSION:?empty value}/" \
               -e "s/COPILOT_API_VERSION: .+/COPILOT_API_VERSION: ${COPILOT_API_VERSION:?empty value}/" \
               -e "s/PIKNIK_VERSION: .+/PIKNIK_VERSION: ${PIKNIK_VERSION:?empty value}/" \
               -e "s/TAILSCALE_VERSION: .+/TAILSCALE_VERSION: ${TAILSCALE_VERSION:?empty value}/" \

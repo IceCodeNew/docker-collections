@@ -1,0 +1,49 @@
+name: CLIProxyAPI Image CI
+permissions: {}
+
+on:
+  push:
+    branches:
+    - 'release'
+    paths:
+    - '.github/workflows/CLIProxyAPI.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cliproxyapi
+  CLIPROXYAPI_VERSION: v6.6.71
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+          repository: 'router-for-me/CLIProxyAPI'
+          ref: "${{ env.CLIPROXYAPI_VERSION }}"
+
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+
+      - name: pre-start
+        shell: bash
+        run: |
+          curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
+          curl -o '/tmp/.ko.yaml' -- \
+              https://raw.githubusercontent.com/IceCodeNew/docker-collections/master/.cliproxyapi.ko.yaml
+
+      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+        env:
+          KO_DOCKER_REPO: docker.io/${{ env.REGISTRY_IMAGE }}
+      - run: ko build --platform=linux/amd64,linux/arm64 --bare ./cmd/server/
+        env:
+          KO_CONFIG_PATH: /tmp/.ko.yaml

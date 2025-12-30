@@ -1,0 +1,11 @@
+builds:
+- id: default
+  dir: .  # default is .
+  flags:
+  - -trimpath
+  ldflags:
+  - -s -w
+  - -X main.Version={{.Git.Tag}}
+  - -X main.Commit={{.Git.ShortCommit}}
+  - -X main.BuildDate={{.Git.CommitDate}}
+  main: ./cmd/server/
