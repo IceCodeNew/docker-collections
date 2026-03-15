@@ -34,7 +34,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: "{{defaultContext}}:minideb-based"
           file: "./debian.Dockerfile"
@@ -134,7 +134,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           build-args: GOLANG_VERSION=${{ env.golang_latest_tag_name }}
           context: "{{defaultContext}}:minideb-based"
@@ -221,7 +221,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: "{{defaultContext}}:minideb-based"
           file: "./python_debian-nonroot.Dockerfile"
@@ -313,7 +313,7 @@ jobs:
       -
         name: Build and push by digest
         id: build
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: "{{defaultContext}}:minideb-based"
           file: "./python_debian12-nonroot.Dockerfile"
