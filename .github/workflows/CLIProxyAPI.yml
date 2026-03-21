@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cliproxyapi
-  CLIPROXYAPI_VERSION: v6.6.71
+  CLIPROXYAPI_VERSION: v6.8.55
 
 jobs:
   publish:
