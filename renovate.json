@@ -21,10 +21,7 @@
   "ignorePresets": ["docker:pinDigests"],
   "packageRules": [
     {
-      // MUST have a matching criteria
       "matchPackageNames": ["*"],
-
-      // followed by the actions. Both the matching and actions are mandatory.
       "minimumReleaseAge": "3 days",
       "internalChecksFilter": "strict"
     }
