@@ -4,6 +4,7 @@ FROM mirror.gcr.io/bitnami/minideb:latest
 # refer to: https://github.com/GoogleContainerTools/distroless/blob/f9a9ff8921bda8fda2276853804e36d2ac988b16/python3/BUILD
 RUN install_packages \
         ca-certificates catatonit \
+        extrepo \
         libpython3-stdlib python3-minimal \
         tzdata \
         zlib1g \
