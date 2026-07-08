@@ -114,6 +114,21 @@ jobs:
           - linux/amd64
           - linux/arm64
     steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          repository: 'hmgle/graftcp'
+          # renovate: datasource=github-tags depName=graftcp packageName=hmgle/graftcp
+          ref: 'v0.8.2'
+          path: 'graftcp-src'
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: 'graftcp-src/local/go.mod'
+          check-latest: true
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -123,22 +138,21 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Fetch latest tag of Golang
+      - name: Set Golang version
         shell: bash
         run: |
-          golang_latest_tag_name=$(
-              docker run --rm golang:alpine go version \
-                  | grep -Po '(?<=go version go)[0-9]+\.[0-9]+\.[0-9]+'
-          )
-          echo "golang_latest_tag_name=${golang_latest_tag_name}" >> "$GITHUB_ENV"
+          golang_version="$(go env GOVERSION)"
+          echo "golang_version=${golang_version#go}" >> "$GITHUB_ENV"
       -
         name: Build and push by digest
         id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          build-args: GOLANG_VERSION=${{ env.golang_latest_tag_name }}
-          context: "{{defaultContext}}:minideb-based"
-          file: "./graftcp.Dockerfile"
+          build-args: GOLANG_VERSION=${{ env.golang_version }}
+          build-contexts: |
+            graftcp-src=./graftcp-src/
+          context: "${{ github.workspace }}/minideb-based/"
+          file: "${{ github.workspace }}/minideb-based/graftcp.Dockerfile"
           push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}

@@ -8,6 +8,13 @@
       "matchStrings": ["(?<currentValue>.*?)\\n"],
       "depNameTemplate": "markitdown",
       "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github\\/workflows\\/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s+ref: ['\"]?(?<currentValue>[^'\"]+)['\"]?"
+      ]
     }
   ],
   "extends": [
