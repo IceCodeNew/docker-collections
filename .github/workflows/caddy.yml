@@ -4,7 +4,7 @@ permissions: {}
 on:
   push:
     branches:
-    - 'release'
+    - 'master'
     paths:
     - '.github/workflows/caddy.yml'
     - 'caddy/Dockerfile'
@@ -12,7 +12,8 @@ on:
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/caddy
-  CADDY_VERSION: v2.8.4
+  # renovate: datasource=github-releases depName=caddy packageName=caddyserver/caddy
+  CADDY_VERSION: v2.11.4
 
 jobs:
   images:

@@ -35,37 +35,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Chores (generate envs)
-        id: chores
-        env:
-          CACHED_GITHUB_API: ${{ secrets.GH_API_BASEURL }}
-        run: |
-          set -e -o pipefail
-          set -x
-          if HTTP_STATUS_CODE=$(
-              curl -fsSL -H "Accept: application/vnd.github.v3+json" -I -o /dev/null -w "%{http_code}" -- "${CACHED_GITHUB_API}/"
-          ); then
-              if [[ $HTTP_STATUS_CODE -ge 200 ]] && [[ $HTTP_STATUS_CODE -le 299 ]]; then
-                  GITHUB_API_BASEURL="${CACHED_GITHUB_API}"
-                  echo "info: GitHub cache is ready."
-              fi
-          fi
-          : "${GITHUB_API_BASEURL:=https://api.github.com}"
-
-          iproute2_latest_tag=$(curl -sSL --fail --retry 5 --retry-delay 10 --retry-max-time 60 -H 'Accept: application/vnd.github.v3+json' \
-              "${GITHUB_API_BASEURL}/repos/iproute2/iproute2/tags?per_page=100" \
-              | grep -F 'name' | cut -d'"' -f4 | grep -ivE 'alpha|beta|fips|rc|test|week' \
-              | sort -Vu | tail -n 1)
-
-          echo "iproute2_latest_tag=${iproute2_latest_tag}" >> "$GITHUB_OUTPUT"
-          set +x
       -
         name: Build and push by digest
         id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          build-args: |
-            iproute2_latest_tag=${{ steps.chores.outputs.iproute2_latest_tag }}
           context: "{{defaultContext}}:iproute2"
           push: true
           platforms: ${{ matrix.platform }}

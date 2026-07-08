@@ -1,6 +1,6 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM oven/bun:1-alpine AS assets
+FROM oven/bun:1.3.14-alpine@sha256:5acc90a93e91ff07bf72aa90a7c9f0fa189765aec90b47bdbf2152d2196383c0 AS assets
 WORKDIR /home/bun/app/
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
@@ -13,7 +13,7 @@ COPY --link --from=builder \
     ./              ./dist/
 
 
-FROM oven/bun:1-alpine
+FROM oven/bun:1.3.14-alpine@sha256:5acc90a93e91ff07bf72aa90a7c9f0fa189765aec90b47bdbf2152d2196383c0
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk update; apk --no-progress --no-cache add \
         bash ca-certificates catatonit; \

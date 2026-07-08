@@ -15,6 +15,24 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s+ref: ['\"]?(?<currentValue>[^'\"]+)['\"]?"
       ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github\\/workflows\\/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s+[A-Z0-9_]+_VERSION: ['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Update _VERSION variables in Dockerfiles",
+      "managerFilePatterns": [
+        "/(^|/|\\.)[dD]ockerfile$/",
+        "/(^|/)[dD]ockerfile\\.[^/]*$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s(?:ENV|ARG) .+?_VERSION=(?<currentValue>[^\\s]+)"
+      ]
     }
   ],
   "extends": [
@@ -22,16 +40,43 @@
     "group:allNonMajor",
     "group:githubArtifactActions",
     "group:linters",
-    "schedule:earlyMondays",
+    "schedule:automergeNonOfficeHours",
     "security:openssf-scorecard"
   ],
-  "ignorePresets": ["docker:pinDigests"],
   "packageRules": [
     {
       "matchPackageNames": ["*"],
       "minimumReleaseAge": "3 days",
       "internalChecksFilter": "strict"
+    },
+    {
+      "matchPackageNames": ["aws/aws-lc"],
+      "allowedVersions": "!/alpha|beta|fips|rc|test|week/i"
+    },
+    {
+      "matchPackageNames": ["iproute2/iproute2"],
+      "allowedVersions": "!/alpha|beta|fips|rc|test|week/i"
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["digest"],
+      "matchDatasources": ["docker"],
+      "automerge": true
+    },
+    {
+      "description": "Batch repository-produced image digest updates to reduce self-triggering build loops.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/\\/icecodexi\\//"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAge": "12 hours",
+      "schedule": ["after 12am and before 1am", "after 12pm and before 1pm"],
+      "automerge": true
     }
   ],
+  "automergeType": "branch",
   "timezone": "Asia/Shanghai"
 }

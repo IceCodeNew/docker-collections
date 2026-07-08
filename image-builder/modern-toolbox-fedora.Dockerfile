@@ -1,8 +1,7 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM quay.io/fedora/fedora-minimal:latest AS base
+FROM quay.io/fedora/fedora-minimal:latest@sha256:7ea82ca1cbfa458f3221e04058a521ec47bc37d60b1d0440ff5f1977107497bc AS base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG image_build_date=2024-06-23
 
 # RUN dnf install -y --setopt=install_weak_deps=False --repo=fedora --repo=updates 'dnf-command(download)' \
 #     && dnf config-manager --set-disabled fedora-cisco-openh264,fedora-modular,updates-modular \

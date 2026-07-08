@@ -1,14 +1,15 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM mirror.gcr.io/icecodexi/image-builder:alpine AS build
+FROM mirror.gcr.io/icecodexi/image-builder:alpine@sha256:6d2bc445603f95e41c78eba2319c5a67524218857a48a78182948eb153198e82 AS build
 RUN apk update \
     && apk --no-progress --no-cache add \
         bison flex \
     && rm -rf /var/cache/apk/*;
 
-ARG iproute2_latest_tag=v6.16.0
+# renovate: datasource=github-tags depName=iproute2 packageName=iproute2/iproute2
+ARG IPROUTE2_VERSION=v6.16.0
 ARG REPOPATH="github.com/iproute2/iproute2"
-ADD --link "https://${REPOPATH}.git#${iproute2_latest_tag}" /src/${REPOPATH}/
+ADD --link "https://${REPOPATH}.git#${IPROUTE2_VERSION}" /src/${REPOPATH}/
 WORKDIR /src/${REPOPATH}/
 
 ARG SBINDIR=/output/sbin

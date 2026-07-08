@@ -4,14 +4,15 @@ permissions: {}
 on:
   push:
     branches:
-    - 'release'
+    - 'master'
     paths:
     - '.github/workflows/derp.yml'
   workflow_dispatch:
 
 
 env:
-  TAILSCALE_VERSION: v1.68.0
+  # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale
+  TAILSCALE_VERSION: v1.98.8
 
 jobs:
   publish:

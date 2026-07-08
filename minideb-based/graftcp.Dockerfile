@@ -1,6 +1,6 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM mirror.gcr.io/icecodexi/image-builder:debian AS graftcp-builder
+FROM mirror.gcr.io/icecodexi/image-builder:debian@sha256:e6a112ca869fb25c914f16fd04107a6c864007109b28d3ef8930230da689ae79 AS graftcp-builder
 ARG TARGETARCH
 ARG GOLANG_VERSION
 ENV GOLANG_VERSION=${GOLANG_VERSION} \

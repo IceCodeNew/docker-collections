@@ -1,7 +1,6 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM icecodexi/image-builder:alpine AS step0_prepare
-ARG image_build_date=2024-06-23
+FROM icecodexi/image-builder:alpine@sha256:6d2bc445603f95e41c78eba2319c5a67524218857a48a78182948eb153198e82 AS step0_prepare
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
@@ -11,7 +10,7 @@ RUN apk update \
     && apk --no-progress --no-cache upgrade \
     && rm -f /usr/lib/lua5.4/liblua.so \
     && rm -rf /var/cache/apk/*
-COPY --link --from=icecodexi/image-builder:aws-lc /aws-lc-install/ /aws-lc-install/
+COPY --link --from=icecodexi/image-builder:aws-lc@sha256:63e90aaef7f6ce953f45980e67fbffac3ced7549d9e64be7cc0907baf8ec0459 /aws-lc-install/ /aws-lc-install/
 
 
 FROM step0_prepare AS haproxy
@@ -53,7 +52,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM mirror.gcr.io/library/haproxy:3.4-alpine AS assets
+FROM mirror.gcr.io/library/haproxy:3.4-alpine@sha256:0878b11eb64c433be1b0f578a584b8aca12f6caaa64c8f239b8b556c0dd5eeeb AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \

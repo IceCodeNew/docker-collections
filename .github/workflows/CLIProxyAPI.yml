@@ -4,14 +4,15 @@ permissions: {}
 on:
   push:
     branches:
-    - 'release'
+    - 'master'
     paths:
     - '.github/workflows/CLIProxyAPI.yml'
   workflow_dispatch:
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cliproxyapi
-  CLIPROXYAPI_VERSION: v6.6.71
+  # renovate: datasource=github-releases depName=CLIProxyAPI packageName=router-for-me/CLIProxyAPI
+  CLIPROXYAPI_VERSION: v7.2.52
 
 jobs:
   publish:

@@ -1,6 +1,6 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM mirror.gcr.io/library/caddy:latest AS caddy
+FROM mirror.gcr.io/library/caddy:latest@sha256:af5fdcd76f2db5e4e974ee92f96ee8c0fc3edb55bd4ba5032547cbf3f65e486d AS caddy
 RUN apk update \
     && apk --no-progress --no-cache add \
         catatonit \
@@ -22,7 +22,8 @@ ENV TZ=Asia/Taipei
 ENV XDG_CONFIG_HOME=/config
 ENV XDG_DATA_HOME=/data
 
-ARG CADDY_VERSION=v2.8.4
+# renovate: datasource=github-releases depName=caddy packageName=caddyserver/caddy
+ARG CADDY_VERSION=v2.11.4
 ENV CADDY_VERSION=${CADDY_VERSION:-latest}
 
 LABEL org.opencontainers.image.version=$CADDY_VERSION
