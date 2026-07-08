@@ -10,7 +10,9 @@ ENV PATH="/home/nonroot/.local/bin:${PATH}" \
 
 FROM uv AS build
 ARG ver_markitdown
-RUN uv --no-progress tool install "markitdown[all]==${ver_markitdown}"
+# FIXME: --prerelease=allow is a temp fix for azure-ai-contentunderstanding dependency.
+# Revert once upstream resolves the pre-release requirement.
+RUN uv --no-progress tool install --prerelease=allow "markitdown[all]==${ver_markitdown}"
 
 
 FROM mirror.gcr.io/icecodexi/python:debian-nonroot@sha256:7f85f87ff85fa9f27689b4175ad10a42f7fc6dbe9e1c4b6447da27d5e747f1f4 AS base
