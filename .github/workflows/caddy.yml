@@ -36,13 +36,16 @@ jobs:
           check-latest: true
           cache: false
           go-version: 'stable'
+      - name: Install xcaddy
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          mise_toml: |
+            [tools]
+            "github:caddyserver/xcaddy" = "latest"
       - name: Build
         env:
           _TARGETARCH: ${{ matrix.platform }}
         run: |
-          # Set up xcaddy
-          curl -- 'https://i.jpillora.com/caddyserver/xcaddy!' | bash
-
           go env -w CGO_ENABLED=0
           case "$_TARGETARCH" in \
               linux/amd64) \
