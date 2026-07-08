@@ -7,7 +7,7 @@ RUN apk update \
     && rm -rf /var/cache/apk/*;
 
 # renovate: datasource=github-tags depName=iproute2 packageName=iproute2/iproute2
-ARG IPROUTE2_VERSION=v6.16.0
+ARG IPROUTE2_VERSION=v7.1.0
 ARG REPOPATH="github.com/iproute2/iproute2"
 ADD --link "https://${REPOPATH}.git#${IPROUTE2_VERSION}" /src/${REPOPATH}/
 WORKDIR /src/${REPOPATH}/
