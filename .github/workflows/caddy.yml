@@ -37,7 +37,7 @@ jobs:
           cache: false
           go-version: 'stable'
       - name: Install xcaddy
-        uses: jdx/mise-action@c1640e24c57a1353b0ff260ac780b9be101f0f8f # v4.2.0
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
         with:
           tool_versions: |
             "go:github.com/caddyserver/xcaddy/cmd/xcaddy" latest
