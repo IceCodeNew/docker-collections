@@ -12,6 +12,10 @@ on:
   - cron: "0 0 * * *"
   workflow_dispatch:
 
+env:
+  # renovate: datasource=github-tags depName=graftcp packageName=hmgle/graftcp
+  GRAFTCP_VERSION: v0.8.2
+
 jobs:
   debian:
     runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
@@ -94,7 +98,7 @@ jobs:
       -
         name: Inspect image
         env:
-          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           docker buildx imagetools inspect "${REPOSITORY}/image-builder:debian" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
@@ -204,14 +208,14 @@ jobs:
           REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           # shellcheck disable=SC2046
-          docker buildx imagetools create --tag "${REPOSITORY}/graftcp:latest" \
+          docker buildx imagetools create --tag "${REPOSITORY}/graftcp:latest" --tag "${REPOSITORY}/graftcp:${{ env.GRAFTCP_VERSION }}" \
               $(printf "${REPOSITORY}/graftcp@sha256:%s " *)
       -
         name: Inspect image
         env:
-          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          docker buildx imagetools inspect "${REPOSITORY}/graftcp:latest" \
+          docker buildx imagetools inspect "${REPOSITORY}/graftcp:${{ env.GRAFTCP_VERSION }}" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
 
   python-nonroot:
@@ -295,7 +299,7 @@ jobs:
       -
         name: Inspect image
         env:
-          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           docker buildx imagetools inspect "${REPOSITORY}/python:debian-nonroot" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
@@ -387,7 +391,7 @@ jobs:
       -
         name: Inspect image
         env:
-          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
+          REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           docker buildx imagetools inspect "${REPOSITORY}/python:debian12-nonroot" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw

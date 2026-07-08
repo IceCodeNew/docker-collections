@@ -19,6 +19,8 @@ env:
 jobs:
   markitdown:
     runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    outputs:
+      ver_markitdown: ${{ steps.chores.outputs.ver_markitdown }}
     strategy:
       fail-fast: false
       matrix:
@@ -109,20 +111,22 @@ jobs:
         working-directory: /tmp/markitdown-digests/
         env:
           REGISTRY_IMAGE: ${{ env.markitdown_IMAGE }}
+          VERSION: ${{ needs.markitdown.outputs.ver_markitdown }}
         run: |
           # shellcheck disable=SC2046
-          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:latest" \
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:latest" --tag "${REGISTRY_IMAGE}:${VERSION}" \
               $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
       -
         name: Inspect image
         env:
           REGISTRY_IMAGE: ${{ env.markitdown_IMAGE }}
+          VERSION: ${{ needs.markitdown.outputs.ver_markitdown }}
         run: |
-          docker buildx imagetools inspect "${REGISTRY_IMAGE}:latest" \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:${VERSION}" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: "${{ env.markitdown_IMAGE }}:latest"
+          image-ref: "${{ env.markitdown_IMAGE }}:${{ needs.markitdown.outputs.ver_markitdown }}"
           format: 'table'
