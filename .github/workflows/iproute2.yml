@@ -13,7 +13,9 @@ on:
   workflow_dispatch:
 
 env:
-  iproute2_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/iproute2
+  IPROUTE2_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/iproute2
+  # renovate: datasource=github-tags depName=iproute2 packageName=iproute2/iproute2
+  IPROUTE2_VERSION: v7.1.0
 
 jobs:
   iproute2:
@@ -45,7 +47,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.iproute2_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.IPROUTE2_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
         env:
@@ -89,21 +91,21 @@ jobs:
         name: Create manifest list and push
         working-directory: /tmp/iproute2-digests/
         env:
-          REGISTRY_IMAGE: ${{ env.iproute2_IMAGE }}
+          REGISTRY_IMAGE: ${{ env.IPROUTE2_IMAGE }}
         run: |
           # shellcheck disable=SC2046
-          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:latest" \
+          docker buildx imagetools create --tag "${REGISTRY_IMAGE}:latest" --tag "${REGISTRY_IMAGE}:${{ env.IPROUTE2_VERSION }}" \
               $(printf "${REGISTRY_IMAGE}@sha256:%s " *)
       -
         name: Inspect image
         env:
-          REGISTRY_IMAGE: ${{ env.iproute2_IMAGE }}
+          REGISTRY_IMAGE: ${{ env.IPROUTE2_IMAGE }}
         run: |
-          docker buildx imagetools inspect "${REGISTRY_IMAGE}:latest" \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:${{ env.IPROUTE2_VERSION }}" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: "${{ env.iproute2_IMAGE }}:latest"
+          image-ref: "${{ env.IPROUTE2_IMAGE }}:${{ env.IPROUTE2_VERSION }}"
           format: 'table'
