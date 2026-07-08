@@ -30,14 +30,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Install apko
+        uses: jdx/mise-action@c1640e24c57a1353b0ff260ac780b9be101f0f8f # v4.2.0
+        with:
+          cache: true
+          mise_toml: |
+            [tools]
+            apko = "latest"
+
       - name: Build registry-base
         shell: bash
         env:
           REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
-          curl() { $(type -P curl) -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }
-          curl -sS -o ./apko-installer -- 'i.jpillora.com/chainguard-dev/apko!'
-          bash -x ./apko-installer
           apko publish ./registry/base.yaml "${REGISTRY_IMAGE}:base"
 
   registry:
