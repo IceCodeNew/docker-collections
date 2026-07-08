@@ -1,5 +1,8 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
+# renovate: datasource=docker packageName=library/haproxy versioning=docker
+ARG HAPROXY_VERSION=3.4
+
 FROM icecodexi/image-builder:alpine@sha256:6d2bc445603f95e41c78eba2319c5a67524218857a48a78182948eb153198e82 AS step0_prepare
 RUN apk update \
     && apk --no-progress --no-cache add \
@@ -14,12 +17,12 @@ COPY --link --from=icecodexi/image-builder:aws-lc@sha256:63e90aaef7f6ce953f45980
 
 
 FROM step0_prepare AS haproxy
-ARG haproxy_branch=3.2
+ARG HAPROXY_VERSION
 ARG dockerfile_workdir=/build_root/haproxy/
 WORKDIR "$dockerfile_workdir"
 RUN unset -f curl \
     && eval 'curl() { /usr/bin/curl -LRq --retry 5 --retry-delay 10 --retry-max-time 60 --fail "$@"; }' \
-    && curl -sSL "https://git.haproxy.org/?p=haproxy-${haproxy_branch}.git;a=snapshot;h=refs/heads/master;sf=tgz" \
+    && curl -sSL "https://git.haproxy.org/?p=haproxy-${HAPROXY_VERSION}.git;a=snapshot;h=refs/heads/master;sf=tgz" \
         | bsdtar -xf- --strip-components 1 --no-xattrs
 
 ENV PKG_CONFIG_ALL_STATIC=true \
@@ -52,7 +55,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM mirror.gcr.io/library/haproxy:3.4-alpine@sha256:0878b11eb64c433be1b0f578a584b8aca12f6caaa64c8f239b8b556c0dd5eeeb AS assets
+FROM mirror.gcr.io/library/haproxy:${HAPROXY_VERSION}-alpine@sha256:0878b11eb64c433be1b0f578a584b8aca12f6caaa64c8f239b8b556c0dd5eeeb AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \
