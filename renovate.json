@@ -15,6 +15,24 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s+ref: ['\"]?(?<currentValue>[^'\"]+)['\"]?"
       ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github\\/workflows\\/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s+[A-Z0-9_]+_VERSION: ['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Update _VERSION variables in Dockerfiles",
+      "managerFilePatterns": [
+        "/(^|/|\\.)[dD]ockerfile$/",
+        "/(^|/)[dD]ockerfile\\.[^/]*$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?)(?: depName=(?<depName>.+?))? packageName=(?<packageName>.+?)(?: versioning=(?<versioning>[a-z-]+?))?\\s(?:ENV|ARG) .+?_VERSION=(?<currentValue>[^\\s]+)"
+      ]
     }
   ],
   "extends": [
@@ -31,6 +49,14 @@
       "matchPackageNames": ["*"],
       "minimumReleaseAge": "3 days",
       "internalChecksFilter": "strict"
+    },
+    {
+      "matchPackageNames": ["aws/aws-lc"],
+      "allowedVersions": "!/alpha|beta|fips|rc|test|week/i"
+    },
+    {
+      "matchPackageNames": ["iproute2/iproute2"],
+      "allowedVersions": "!/alpha|beta|fips|rc|test|week/i"
     }
   ],
   "timezone": "Asia/Shanghai"

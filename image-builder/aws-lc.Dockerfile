@@ -25,10 +25,11 @@ ENV CGO_ENABLED=0
 
 
 FROM golang-builder AS aws-lc-builder
-ARG aws_lc_latest_tag=v1.30.1
+# renovate: datasource=github-tags depName=aws-lc packageName=aws/aws-lc
+ARG AWS_LC_VERSION=v1.30.1
 ARG REPOPATH="github.com/aws/aws-lc"
 WORKDIR /go/src/${REPOPATH}/
-ADD --link "https://${REPOPATH}.git#${aws_lc_latest_tag}" ./
+ADD --link "https://${REPOPATH}.git#${AWS_LC_VERSION}" ./
 
 ENV CC=clang \
     CXX=clang++

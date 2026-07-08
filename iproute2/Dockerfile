@@ -6,9 +6,10 @@ RUN apk update \
         bison flex \
     && rm -rf /var/cache/apk/*;
 
-ARG iproute2_latest_tag=v6.16.0
+# renovate: datasource=github-tags depName=iproute2 packageName=iproute2/iproute2
+ARG IPROUTE2_VERSION=v6.16.0
 ARG REPOPATH="github.com/iproute2/iproute2"
-ADD --link "https://${REPOPATH}.git#${iproute2_latest_tag}" /src/${REPOPATH}/
+ADD --link "https://${REPOPATH}.git#${IPROUTE2_VERSION}" /src/${REPOPATH}/
 WORKDIR /src/${REPOPATH}/
 
 ARG SBINDIR=/output/sbin

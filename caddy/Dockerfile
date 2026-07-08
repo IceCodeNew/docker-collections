@@ -22,7 +22,8 @@ ENV TZ=Asia/Taipei
 ENV XDG_CONFIG_HOME=/config
 ENV XDG_DATA_HOME=/data
 
-ARG CADDY_VERSION=v2.8.4
+# renovate: datasource=github-releases depName=caddy packageName=caddyserver/caddy
+ARG CADDY_VERSION=v2.11.4
 ENV CADDY_VERSION=${CADDY_VERSION:-latest}
 
 LABEL org.opencontainers.image.version=$CADDY_VERSION

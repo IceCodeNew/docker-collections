@@ -4,13 +4,14 @@ permissions: {}
 on:
   push:
     branches:
-    - 'release'
+    - 'master'
     paths:
     - '.github/workflows/copilot-api.yml'
     - 'copilot-api/Dockerfile'
   workflow_dispatch:
 
 env:
+  # renovate: datasource=github-releases depName=copilot-api packageName=ericc-ch/copilot-api
   COPILOT_API_VERSION: v0.7.0
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/copilot-api
 

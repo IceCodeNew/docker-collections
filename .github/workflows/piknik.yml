@@ -4,13 +4,14 @@ permissions: {}
 on:
   push:
     branches:
-    - 'release'
+    - 'master'
     paths:
     - '.github/workflows/piknik.yml'
   workflow_dispatch:
 
 
 env:
+  # renovate: datasource=github-releases depName=piknik packageName=jedisct1/piknik
   PIKNIK_VERSION: 0.10.2
 
 jobs:
