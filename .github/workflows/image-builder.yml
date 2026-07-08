@@ -4,7 +4,7 @@ permissions: {}
 on:
   push:
     branches:
-    - 'release'
+    - 'master'
     paths:
     - '.github/workflows/image-builder.yml'
     - 'image-builder/*.Dockerfile'
