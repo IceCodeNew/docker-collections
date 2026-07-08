@@ -58,6 +58,11 @@
       "allowedVersions": "!/alpha|beta|fips|rc|test|week/i"
     },
     {
+      "matchPackageNames": ["library/haproxy"],
+      "allowedVersions": "/^[0-9]+\\.[0-9]*[02468]$/",
+      "extractVersion": "^(?<version>[0-9]+\\.[0-9]+)"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
