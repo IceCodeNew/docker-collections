@@ -59,8 +59,7 @@
     },
     {
       "matchPackageNames": ["library/haproxy"],
-      "allowedVersions": "/^[0-9]+\\.[0-9]*[02468]$/",
-      "extractVersion": "^(?<version>[0-9]+\\.[0-9]+)"
+      "allowedVersions": "/^[0-9]+\\.[0-9]*[02468]$/"
     },
     {
       "matchUpdateTypes": ["minor", "patch"],
