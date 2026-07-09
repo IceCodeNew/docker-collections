@@ -3,7 +3,7 @@
 # renovate: datasource=docker packageName=library/haproxy versioning=docker
 ARG HAPROXY_VERSION=3.4.2-alpine
 
-FROM icecodexi/image-builder:alpine@sha256:6d2bc445603f95e41c78eba2319c5a67524218857a48a78182948eb153198e82 AS step0_prepare
+FROM mirror.gcr.io/icecodexi/image-builder:alpine@sha256:6d2bc445603f95e41c78eba2319c5a67524218857a48a78182948eb153198e82 AS step0_prepare
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
@@ -13,7 +13,7 @@ RUN apk update \
     && apk --no-progress --no-cache upgrade \
     && rm -f /usr/lib/lua5.4/liblua.so \
     && rm -rf /var/cache/apk/*
-COPY --link --from=icecodexi/image-builder:aws-lc@sha256:63e90aaef7f6ce953f45980e67fbffac3ced7549d9e64be7cc0907baf8ec0459 /aws-lc-install/ /aws-lc-install/
+COPY --link --from=mirror.gcr.io/icecodexi/image-builder:aws-lc@sha256:63e90aaef7f6ce953f45980e67fbffac3ced7549d9e64be7cc0907baf8ec0459 /aws-lc-install/ /aws-lc-install/
 
 
 FROM step0_prepare AS haproxy

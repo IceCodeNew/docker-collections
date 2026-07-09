@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
+# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
 FROM cgr.dev/chainguard/python:latest-dev@sha256:07a85da651c73a8ff3c0babacbe34e0b48fe4a4282fa206006e2b82c05cc27ba AS assets
 SHELL ["/usr/bin/bash", "-o", "pipefail", "-c"]
@@ -15,8 +15,8 @@ RUN cp -a /usr/lib/libmimalloc-secure.so* \
 
 
 FROM cgr.dev/chainguard/bash:latest@sha256:07c96d8b819bab7d587671a862688ca8b7c9cea9075336b26a568aee4b041a14 AS bash
-FROM icecodexi/gg:latest@sha256:e6d593daeab1359628d8db322c930b7151d117c003fc57b1dcce70a0f918c7ba            AS gg
-FROM icecodexi/bash-toybox:latest@sha256:6ef3c0cb1de6d92026728c0d6fe1b35ae427e7493d4ea494e6de389d46dbe13a
+FROM mirror.gcr.io/icecodexi/gg:latest@sha256:e6d593daeab1359628d8db322c930b7151d117c003fc57b1dcce70a0f918c7ba            AS gg
+FROM mirror.gcr.io/icecodexi/bash-toybox:latest@sha256:6ef3c0cb1de6d92026728c0d6fe1b35ae427e7493d4ea494e6de389d46dbe13a
 RUN    /usr/bin/toybox ln -sf \
     /usr/bin/toybox /usr/bin/nc \
     && /usr/bin/toybox ln -sf \
