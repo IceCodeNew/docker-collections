@@ -70,13 +70,14 @@
       "matchUpdateTypes": ["digest"],
       "matchDatasources": ["docker"],
       "minimumReleaseAge": null,
+      "ignoreTests": true,
       "automerge": true
     },
     {
       "description": "Batch repository-produced image digest updates to reduce self-triggering build loops.",
+      "matchUpdateTypes": ["digest"],
       "matchDatasources": ["docker"],
       "matchPackageNames": ["/\\/icecodexi\\//"],
-      "matchUpdateTypes": ["digest"],
       "minimumReleaseAge": "12 hours",
       "schedule": ["after 12am and before 1am", "after 12pm and before 1pm"],
       "automerge": true
