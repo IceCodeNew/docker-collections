@@ -69,6 +69,7 @@
     {
       "matchUpdateTypes": ["digest"],
       "matchDatasources": ["docker"],
+      "minimumReleaseAge": null,
       "automerge": true
     },
     {
