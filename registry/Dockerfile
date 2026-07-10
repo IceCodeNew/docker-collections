@@ -9,7 +9,7 @@ COPY --from=source /entrypoint.sh /bin/registry \
                    ./usr/bin/
 
 
-FROM mirror.gcr.io/library/alpine:latest@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b AS catatonit
+FROM mirror.gcr.io/library/alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b AS catatonit
 RUN apk update \
     && apk --no-progress --no-cache add \
         catatonit \
