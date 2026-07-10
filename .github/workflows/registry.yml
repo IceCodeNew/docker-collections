@@ -15,6 +15,8 @@ on:
 
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/registry
+  # renovate: datasource=docker packageName=library/registry versioning=docker
+  REGISTRY_VERSION: 3.1.1
 
 jobs:
   build-registry-base:
@@ -58,34 +60,38 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and load the latest variant to local daemon
+      - name: Build and load the current arch image to local daemon
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: "{{defaultContext}}:registry"
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
-          tags: ${{ env.REGISTRY_IMAGE }}:latest
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_VERSION }}
       - name: Smoke Test
         env:
-          registry_repo: ${{ env.REGISTRY_IMAGE }}
+          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
+          REGISTRY_VERSION: ${{ env.REGISTRY_VERSION }}
         run: |
-          docker save -o "registry.tar" "${registry_repo}:latest"
+          docker save -o "registry.tar" "${REGISTRY_IMAGE}:${REGISTRY_VERSION}"
       - name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: "{{defaultContext}}:registry"
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_VERSION }}
+            ${{ env.REGISTRY_IMAGE }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Inspect image
         env:
           REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
+          REGISTRY_VERSION: ${{ env.REGISTRY_VERSION }}
         run: |
-          docker buildx imagetools inspect "${REGISTRY_IMAGE}:latest" \
+          docker buildx imagetools inspect "${REGISTRY_IMAGE}:${REGISTRY_VERSION}" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

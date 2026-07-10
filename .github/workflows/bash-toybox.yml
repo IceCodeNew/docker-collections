@@ -13,6 +13,11 @@ on:
   - cron: "20 10 1-31/10 * *"
   workflow_dispatch:
 
+env:
+  TOYBOX_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox
+  # renovate: datasource=github-tags depName=toybox packageName=landley/toybox
+  TOYBOX_VERSION: 0.8.14
+
 jobs:
   bash-toybox:
     runs-on: ubuntu-latest
@@ -30,20 +35,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and load the latest variant to local daemon
+        name: Build and load the current arch image to local daemon
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: "{{defaultContext}}:bash-toybox"
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:${{ env.TOYBOX_VERSION }}
       -
         name: Smoke Test
         env:
-          registry_repo: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox
+          TOYBOX_IMAGE: ${{ env.TOYBOX_IMAGE }}
+          TOYBOX_VERSION: ${{ env.TOYBOX_VERSION }}
         run: |
-          docker save -o "bash-toybox.tar" "${registry_repo}:latest"
+          docker save -o "bash-toybox.tar" "${TOYBOX_IMAGE}:${TOYBOX_VERSION}"
       -
         name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
@@ -51,14 +57,19 @@ jobs:
           context: "{{defaultContext}}:bash-toybox"
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:${{ env.TOYBOX_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       -
         name: Inspect image
+        env:
+          TOYBOX_IMAGE: ${{ env.TOYBOX_IMAGE }}
+          TOYBOX_VERSION: ${{ env.TOYBOX_VERSION }}
         run: |
-          docker buildx imagetools inspect ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:latest \
+          docker buildx imagetools inspect "${TOYBOX_IMAGE}:${TOYBOX_VERSION}" \
               | grep -Po '[^ \r\n\t\v]+@sha256:[a-z0-9]+' | xargs -r -t -n 1 docker buildx imagetools inspect --raw
       -
         name: Run Trivy vulnerability scanner
@@ -106,7 +117,9 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           file: "./debian12.Dockerfile"
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:debian12
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:debian12
+            ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:${{ env.TOYBOX_VERSION }}-debian12
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
