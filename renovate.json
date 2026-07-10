@@ -67,6 +67,13 @@
       "automerge": true
     },
     {
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["router-for-me/CLIProxyAPI"],
+      "minimumReleaseAge": null,
+      "ignoreTests": true,
+      "automerge": true
+    },
+    {
       "matchUpdateTypes": ["digest"],
       "matchDatasources": ["docker"],
       "minimumReleaseAge": null,
