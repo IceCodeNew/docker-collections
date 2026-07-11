@@ -8,7 +8,7 @@ RUN curl -fsSLR --retry 5 --retry-delay 10 --retry-max-time 60 \
     "https://github.com/userdocs/qbittorrent-nox-static/releases/latest/download/$(arch)-qbittorrent-nox"
 
 
-FROM mirror.gcr.io/icecodexi/python:debian-nonroot@sha256:7f85f87ff85fa9f27689b4175ad10a42f7fc6dbe9e1c4b6447da27d5e747f1f4
+FROM mirror.gcr.io/icecodexi/python:debian-nonroot@sha256:e3d007fe4783d964e17041cdfe5f884218581224cc0d1d341e4151942e89c88b
 ADD --link --chmod=0755 \
     'https://raw.githubusercontent.com/qbittorrent/docker-qbittorrent-nox/refs/heads/main/entrypoint.sh' /
 COPY --link --from=assets --chmod=0755 /emptydir/ /usr/bin/
