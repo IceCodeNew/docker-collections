@@ -14,7 +14,7 @@ RUN cp -a /usr/lib/libmimalloc-secure.so* \
           /emptydir/usr/lib/
 
 
-FROM cgr.dev/chainguard/bash:latest@sha256:8036c169c6ebfd3c59fc8609e18b399e0506eab82a505b774f354bec107a3c4d AS bash
+FROM cgr.dev/chainguard/bash:latest@sha256:a998769ef05587ac99ec3c6b1b59eaebb556052f83a552dce995610a09cbb4b4 AS bash
 FROM mirror.gcr.io/icecodexi/gg:latest@sha256:e6d593daeab1359628d8db322c930b7151d117c003fc57b1dcce70a0f918c7ba            AS gg
 FROM mirror.gcr.io/icecodexi/bash-toybox:latest@sha256:307abe6c09de20cc78544fe645d7d31f0f756540e83b52f6fb59dbce447ead80
 RUN    /usr/bin/toybox ln -sf \
