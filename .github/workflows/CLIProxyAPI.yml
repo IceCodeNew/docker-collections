@@ -12,7 +12,7 @@ on:
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cliproxyapi
   # renovate: datasource=github-releases depName=CLIProxyAPI packageName=router-for-me/CLIProxyAPI
-  CLIPROXYAPI_VERSION: v7.2.90
+  CLIPROXYAPI_VERSION: v7.2.91
 
 jobs:
   publish:
