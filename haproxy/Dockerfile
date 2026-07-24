@@ -3,7 +3,7 @@
 # renovate: datasource=docker packageName=library/haproxy versioning=docker
 ARG HAPROXY_VERSION=3.4.2-alpine
 
-FROM mirror.gcr.io/icecodexi/image-builder:alpine@sha256:4a3abf3ace941a8e5f7faf337a644a02ee87991027596f4dac8646a468925973 AS step0_prepare
+FROM mirror.gcr.io/icecodexi/image-builder:alpine@sha256:bf3c8ce5523784d0ae9748051c217e4fde7b1d1a4bd4b5069e769982e2bd75eb AS step0_prepare
 RUN apk update \
     && apk --no-progress --no-cache add \
         lua5.4-dev \
