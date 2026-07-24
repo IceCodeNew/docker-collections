@@ -13,7 +13,7 @@ RUN apk update \
     && apk --no-progress --no-cache upgrade \
     && rm -f /usr/lib/lua5.4/liblua.so \
     && rm -rf /var/cache/apk/*
-COPY --link --from=mirror.gcr.io/icecodexi/image-builder:aws-lc@sha256:4c8ec74706f544c11288e4b6b2a665497397e1a724c9bf188523c2eb310d6636 /aws-lc-install/ /aws-lc-install/
+COPY --link --from=mirror.gcr.io/icecodexi/image-builder:aws-lc@sha256:a9636539da7d58957215942fb2cc05db4ccc80c3e52ded613732e56c87023154 /aws-lc-install/ /aws-lc-install/
 
 
 FROM step0_prepare AS haproxy
