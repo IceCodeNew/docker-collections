@@ -1,7 +1,7 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
 FROM mirror.gcr.io/tianon/toybox:0.8.14@sha256:a16f8b5944fecf41840b122147588dd63e7e3e1d07ed2a0913aba2118ca91ccb AS toybox
-FROM mirror.gcr.io/bitnami/minideb:bookworm@sha256:759fdf490f3bde644273df6e677cc7831bfc150dd78c646c12efe227b2831d21 AS assets
+FROM mirror.gcr.io/bitnami/minideb:bookworm@sha256:78b29fc58bf04b48503db1f60ac724fd0bd211046534d11ac5496b9103bc241c AS assets
 COPY --link --from=toybox /usr/bin/  /emptydir/usr/bin/
 COPY --link --from=toybox /usr/sbin/ /emptydir/usr/sbin/
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
