@@ -15,7 +15,7 @@ RUN mkdir -p '/etc/dpkg/dpkg.cfg.d' '/etc/apt/apt.conf.d' \
     && rm -rf /var/lib/apt/lists/*
 
 
-FROM mirror.gcr.io/icecodexi/graftcp:v0.8.2@sha256:271d26e76e98deb44d6313f09387b43b7ca19f00db711774e5e09678e4e68bd9 AS graftcp
+FROM mirror.gcr.io/icecodexi/graftcp:v0.8.2@sha256:dd554b343e32f36ca482d0245877c668a16d47f2c253d79e5acb62fcb39754a8 AS graftcp
 FROM scratch
 COPY --link --from=uptime-kuma         /               /
 COPY --link --from=graftcp --chmod=755 /usr/local/bin/ /usr/local/bin/
