@@ -12,7 +12,7 @@ on:
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/cliproxyapi
   # renovate: datasource=github-releases depName=CLIProxyAPI packageName=router-for-me/CLIProxyAPI
-  CLIPROXYAPI_VERSION: v7.2.97
+  CLIPROXYAPI_VERSION: v7.2.102
 
 jobs:
   publish:
@@ -37,7 +37,7 @@ jobs:
           curl -o '/tmp/.ko.yaml' -- \
               https://raw.githubusercontent.com/IceCodeNew/docker-collections/master/.cliproxyapi.ko.yaml
 
-      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+      - uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
