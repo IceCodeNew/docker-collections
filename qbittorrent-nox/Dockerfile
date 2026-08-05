@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM cgr.dev/chainguard/curl:latest-dev@sha256:4ac62a9f5e22ab875c04c4e8db1bc61d637cb5d6f9e70dc698d496f7155e274f AS assets
+FROM cgr.dev/chainguard/curl:latest-dev@sha256:bb83066281e20469f12ac44d83baeeb23056853551b1ca16bc03c67724d7e182 AS assets
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /emptydir/
 RUN curl -fsSLR --retry 5 --retry-delay 10 --retry-max-time 60 \
