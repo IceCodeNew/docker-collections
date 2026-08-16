@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM mirror.gcr.io/library/golang:alpine@sha256:70b46548e42db77e0966aaf3619fd068734dc6c77584d526b91126504fd95816 AS golang-builder
+FROM mirror.gcr.io/library/golang:alpine@sha256:3889b425f035be855a72fb4755265311293b6d414521f0a519d819df32222d83 AS golang-builder
 
 RUN apk update \
     && apk --no-cache add \
