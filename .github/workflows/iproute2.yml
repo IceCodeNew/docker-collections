@@ -15,7 +15,7 @@ on:
 env:
   IPROUTE2_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/iproute2
   # renovate: datasource=github-tags depName=iproute2 packageName=iproute2/iproute2
-  IPROUTE2_VERSION: v7.1.0
+  IPROUTE2_VERSION: v7.2.0
 
 jobs:
   iproute2:
@@ -29,7 +29,7 @@ jobs:
     steps:
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -80,7 +80,7 @@ jobs:
           merge-multiple: true
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
