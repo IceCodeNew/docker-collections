@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 
-FROM mirror.gcr.io/library/registry:3.1.1@sha256:fd374bae807c225661adfe2c0c1f9970a0b8fab1761fd7dfb91e0fd9a8748f9b AS source
+FROM mirror.gcr.io/library/registry:3.1.1@sha256:325b4b29b041e82803abeb703e201655e4e23ab83264ec1a7c9ddb0a5b14a6e0 AS source
 FROM mirror.gcr.io/icecodexi/registry:base@sha256:2bd434c923918d13757c20970e1e51702c596c42b5882558642fad761b67e65c AS assets
 WORKDIR /emptydir/
 COPY --from=source --chown=nonroot:nonroot /etc/distribution/ \
