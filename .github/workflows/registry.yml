@@ -16,7 +16,7 @@ on:
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/registry
   # renovate: datasource=docker packageName=library/registry versioning=docker
-  REGISTRY_VERSION: 3.1.1
+  REGISTRY_VERSION: 3.1.2
 
 jobs:
   build-registry-base:
