@@ -67,7 +67,6 @@ jobs:
           build-contexts: src_dir=./upstream
           target: tested
           build-args: |
-            FETCH_ASSETS=1
             "TEST_RUNTIME_ARGS=[""run"",""--allow-read"",""--allow-net"",""--allow-env"",""--allow-run""]"
           platforms: ${{ matrix.platform }}
           load: true

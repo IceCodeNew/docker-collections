@@ -22,17 +22,19 @@ FROM deps AS assets
 COPY --link --parents --from=src_dir \
     ./package.json ./shared ./server ./tools ./data ./public \
     ./docs/research ./LICENSE ./NOTICE.md ./THIRD-PARTY-NOTICES.md /app/
+RUN DENO_DIR=/tmp/vendor-cache deno run --allow-read --allow-write tools/vendor.mjs \
+    && rm -rf /tmp/vendor-cache \
+    && deno cache server/index.js
 ARG FETCH_ASSETS=0
 RUN --mount=type=bind,source=./verify-assets.ts,target=/verify-assets.ts \
-    deno run --allow-read --allow-write tools/vendor.mjs \
+    export DENO_DIR=/tmp/assets-cache \
     && case "$FETCH_ASSETS" in \
         1) deno run --allow-read --allow-write --allow-net --allow-env=DEBUG tools/fetch-assets.mjs \
             && deno run --allow-read /verify-assets.ts ;; \
         0) ;; \
         *) echo 'FETCH_ASSETS must be 0 or 1.' >&2; exit 1 ;; \
     esac \
-    && deno cache server/index.js \
-    && rm -rf .cache tools \
+    && rm -rf .cache tools /tmp/assets-cache \
     && chown -R 1993:1993 /deno-dir
 
 FROM dhi.io/deno:2.9.7-debian13@sha256:6f0d61dbec987508d26ec6a3e95a6f67c3332221f05958ebd3a661064f60e0f4 AS runtime
