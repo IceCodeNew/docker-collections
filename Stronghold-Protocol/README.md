@@ -25,13 +25,13 @@ docker buildx build --load \
   --tag stronghold-protocol ./Stronghold-Protocol
 ```
 
-`FETCH_ASSETS=1` enables the upstream public asset download by default.
+Asset downloads are disabled by default. Add `--build-arg FETCH_ASSETS=1` to enable them.
+The image workflow enables downloads for published images.
 The build stops if the download report has errors or a manifest file is missing or empty.
 Some optional models have no public source and use upstream fallback graphics.
 Asset sources can change independently of the application release.
 
-For a build without asset downloads, add `--build-arg FETCH_ASSETS=0`.
-The game uses placeholder graphics unless you mount assets and their matching manifest.
+Without downloads, the game uses placeholder graphics unless you mount assets and their matching manifest.
 
 ## Run with a temporary tunnel
 
@@ -81,13 +81,20 @@ Game sessions stay in memory and disappear when the server stops.
 
 ## Validate
 
-Use the Deno version from `Dockerfile`:
+The scripts use Node standard APIs. Run the tests with a Node version that supports TypeScript stripping:
+
+```sh
+node --test Stronghold-Protocol/entrypoint_test.ts
+```
+
+To validate with the Deno engine from `Dockerfile`:
 
 ```sh
 deno fmt --check Stronghold-Protocol/*.ts
 deno lint Stronghold-Protocol/*.ts
 deno check Stronghold-Protocol/*.ts
-deno test -A Stronghold-Protocol/entrypoint_test.ts
+TEST_RUNTIME_ARGS='["run","-A","--no-config","--no-lock"]' \
+  deno test -A Stronghold-Protocol/entrypoint_test.ts
 ```
 
 The image workflow builds native AMD64 and ARM64 images and checks `/healthz` before publication.

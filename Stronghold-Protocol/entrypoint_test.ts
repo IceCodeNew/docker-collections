@@ -1,10 +1,30 @@
 import assert from "node:assert/strict";
+import { spawn as spawnProcess } from "node:child_process";
+import { once } from "node:events";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { createServer } from "node:net";
+import process from "node:process";
 import { createInterface } from "node:readline";
-import { Readable } from "node:stream";
+import { text } from "node:stream/consumers";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 const script = (name: string) =>
-  new URL(`./${name}.ts`, import.meta.url).pathname;
+  fileURLToPath(new URL(`./${name}.ts`, import.meta.url));
 const deadlineMs = 10_000;
+// Alternate engines can supply their launcher arguments without changing tests.
+const runtimeArgs: string[] = JSON.parse(process.env.TEST_RUNTIME_ARGS || "[]");
+assert.ok(
+  Array.isArray(runtimeArgs) &&
+    runtimeArgs.every((arg) => typeof arg === "string"),
+);
 type Role = "server" | "tunnel";
 type Event = {
   role: Role;
@@ -17,28 +37,43 @@ type Event = {
 // The cloudflared CLI fake records tunnel argv/env and runs real loopback
 // services without creating a public tunnel.
 const fixtureSource = `
-const role = Deno.args[0] === "server" ? "server" : "tunnel";
-const emit = (event, extra = {}) => Deno.stdout.writeSync(new TextEncoder().encode(JSON.stringify({
-  fixture: true, role, event, pid: Deno.pid, ...extra,
-}) + "\\n"));
-const token = Deno.env.get("TUNNEL_TOKEN") ?? "";
-const tokenFile = Deno.env.get("TUNNEL_TOKEN_FILE") ?? "";
-const received = { args: Deno.args, token, tokenFile,
+import { writeSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import process from "node:process";
+const args = process.argv.slice(2);
+const role = args[0] === "server" ? "server" : "tunnel";
+const emit = (event, extra = {}) => writeSync(1, JSON.stringify({
+  fixture: true, role, event, pid: process.pid, ...extra,
+}) + "\\n");
+const token = process.env.TUNNEL_TOKEN ?? "";
+const tokenFile = process.env.TUNNEL_TOKEN_FILE ?? "";
+const received = { args, token, tokenFile,
   fileToken: role === "tunnel" && tokenFile
-    ? (await Deno.readTextFile(tokenFile)).trim() : "" };
-const server = Deno.serve({ hostname: "127.0.0.1",
-  port: role === "server" ? Number(Deno.env.get("PORT") || "3000") : 0,
-  onListen() {},
-}, (request) => new URL(request.url).pathname === "/healthz"
-  ? Response.json(received, { status: Number(Deno.env.get("FIXTURE_HTTP_STATUS") || "200") })
-  : new Response("not found", { status: 404 }));
-Deno.addSignalListener("SIGTERM", async () => {
-  emit("stopped", { signal: "SIGTERM" }); await server.shutdown(); Deno.exit(0);
+    ? (await readFile(tokenFile, "utf8")).trim() : "" };
+const server = createServer((request, response) => {
+  if (request.url === "/healthz") {
+    response.writeHead(Number(process.env.FIXTURE_HTTP_STATUS || "200"), {
+      "content-type": "application/json",
+    });
+    response.end(JSON.stringify(received));
+  } else {
+    response.writeHead(404); response.end("not found");
+  }
 });
-Deno.addSignalListener("SIGUSR1", () => Deno.exit(Number(Deno.env.get("FIXTURE_EXIT_CODE") || "0")));
+process.on("SIGTERM", () => {
+  emit("stopped", { signal: "SIGTERM" });
+  server.close(() => process.exit(0));
+  server.closeAllConnections();
+});
+process.on("SIGUSR1", () => process.exit(Number(process.env.FIXTURE_EXIT_CODE || "0")));
+await new Promise((resolve, reject) => {
+  server.once("error", reject);
+  server.listen(role === "server" ? Number(process.env.PORT || "3000") : 0,
+    "127.0.0.1", resolve);
+});
 // Ready means both the socket and signal handlers are installed.
-emit("ready", { port: server.addr.port });
-await server.finished;
+emit("ready", { port: server.address().port });
 `;
 
 async function bounded<T>(promise: Promise<T>): Promise<T> {
@@ -57,68 +92,91 @@ async function bounded<T>(promise: Promise<T>): Promise<T> {
     clearTimeout(timer);
   }
 }
-function kill(pid: number, signal: Deno.Signal) {
+function hasCode(error: unknown, code: string) {
+  return error instanceof Error && "code" in error && error.code === code;
+}
+function kill(pid: number, signal: NodeJS.Signals) {
   try {
-    Deno.kill(pid, signal);
+    process.kill(pid, signal);
   } catch (error) {
-    if (!(error instanceof Deno.errors.NotFound)) throw error;
+    if (!hasCode(error, "ESRCH")) throw error;
   }
 }
-function unusedPort() {
-  const listener = Deno.listen({ hostname: "127.0.0.1", port: 0 });
+async function unusedPort() {
+  const listener = createServer();
+  listener.listen(0, "127.0.0.1");
+  await bounded(once(listener, "listening"));
   try {
-    return (listener.addr as Deno.NetAddr).port;
+    const address = listener.address();
+    assert.ok(address && typeof address !== "string");
+    return address.port;
   } finally {
-    listener.close();
+    await new Promise<void>((resolve, reject) => {
+      listener.close((error) => error ? reject(error) : resolve());
+    });
   }
 }
 async function pids(fixtureScript: string) {
   const result: number[] = [];
-  for await (const entry of Deno.readDir("/proc")) {
-    if (!/^\d+$/.test(entry.name)) continue;
+  for (const name of await readdir("/proc")) {
+    if (!/^\d+$/.test(name)) continue;
     try {
       if (
-        (await Deno.readTextFile(`/proc/${entry.name}/cmdline`)).split("\0")
+        (await readFile(`/proc/${name}/cmdline`, "utf8")).split("\0")
           .includes(fixtureScript)
       ) {
-        result.push(Number(entry.name));
+        result.push(Number(name));
       }
     } catch (error) {
-      if (!(error instanceof Deno.errors.NotFound)) throw error;
+      if (!hasCode(error, "ENOENT") && !hasCode(error, "ESRCH")) throw error;
     }
   }
   return result;
 }
 function spawn(cwd: string, args: string[], env: Record<string, string> = {}) {
-  return new Deno.Command(Deno.execPath(), {
-    args: ["run", "--no-config", "--no-lock", ...args],
+  const child = spawnProcess(process.execPath, [...runtimeArgs, ...args], {
     cwd,
-    clearEnv: true,
-    env: {
-      DENO_DIR: `${cwd}/deno-cache`,
-      DENO_NO_UPDATE_CHECK: "1",
-      NO_COLOR: "1",
-      ...env,
+    env: { NO_COLOR: "1", ...env },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const status = new Promise<
+    { code: number | null; signal: NodeJS.Signals | null }
+  >((resolve, reject) => {
+    child.once("error", reject);
+    // close also proves the child and inherited output pipes have closed.
+    child.once("close", (code, signal) => resolve({ code, signal }));
+  });
+  return {
+    stdout: child.stdout!,
+    stderr: child.stderr!,
+    status,
+    kill: (signal: NodeJS.Signals) => {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill(signal);
+      }
     },
-    stdin: "null",
-    stdout: "piped",
-    stderr: "piped",
-  }).spawn();
+  };
 }
 async function run(
   cwd: string,
   args: string[],
   env: Record<string, string> = {},
 ) {
-  const child = spawn(cwd, args, env), output = child.output();
+  const child = spawn(cwd, args, env);
+  const output = Promise.all([
+    child.status,
+    text(child.stdout),
+    text(child.stderr),
+  ])
+    .then(([status, stdout, stderr]) => ({ ...status, stdout, stderr }));
   try {
     return await bounded(output);
   } finally {
-    kill(child.pid, "SIGKILL");
+    child.kill("SIGKILL");
     await bounded(output);
   }
 }
-function observe(child: Deno.ChildProcess) {
+function observe(child: ReturnType<typeof spawn>) {
   const events = new Map<
     string,
     ReturnType<typeof Promise.withResolvers<Event>>
@@ -131,7 +189,7 @@ function observe(child: Deno.ChildProcess) {
   let stderr = "";
   const stdout = (async () => {
     for await (
-      const line of createInterface({ input: Readable.fromWeb(child.stdout) })
+      const line of createInterface({ input: child.stdout })
     ) {
       if (!line.startsWith("{")) continue;
       const received = JSON.parse(line);
@@ -140,8 +198,8 @@ function observe(child: Deno.ChildProcess) {
       }
     }
   })();
-  const errors = child.stderr.text().then((text) => {
-    stderr = text;
+  const errors = text(child.stderr).then((output) => {
+    stderr = output;
   });
   const finished = Promise.all([child.status, stdout, errors]).then((
     [status],
@@ -170,22 +228,17 @@ async function withFixture(
     },
   ) => Promise<void>,
 ) {
-  const dir = await Deno.makeTempDir({
-    dir: "/tmp",
-    prefix: "stronghold-test-",
-  });
-  const services: Service[] = [], fixtureScript = `${dir}/service.ts`;
+  const dir = await mkdtemp("/tmp/stronghold-test-");
+  const services: Service[] = [], fixtureScript = `${dir}/service.mjs`;
   try {
-    await Deno.mkdir(`${dir}/bin`);
-    await Deno.writeTextFile(fixtureScript, fixtureSource);
+    await mkdir(`${dir}/bin`);
+    await writeFile(fixtureScript, fixtureSource);
     const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
-    await Deno.writeTextFile(
+    const launcher = [process.execPath, ...runtimeArgs, fixtureScript]
+      .map(quote).join(" ");
+    await writeFile(
       `${dir}/bin/cloudflared`,
-      `#!/bin/sh\nexec ${
-        quote(Deno.execPath())
-      } run --no-config --no-lock --allow-net --allow-env --allow-read ${
-        quote(fixtureScript)
-      } "$@"\n`,
+      `#!/bin/sh\nexec ${launcher} "$@"\n`,
       { mode: 0o700 },
     );
     await test({
@@ -193,8 +246,9 @@ async function withFixture(
       start: (env = {}) => {
         const service = observe(
           spawn(dir, [
-            "-A",
             script("entrypoint"),
+            process.execPath,
+            ...runtimeArgs,
             fixtureScript,
             "server",
             "user-argument",
@@ -215,18 +269,18 @@ async function withFixture(
   } finally {
     try {
       for (const service of services) {
-        kill(service.child.pid, "SIGTERM");
+        service.child.kill("SIGTERM");
         try {
           await service.status();
         } catch {
           for (const pid of await pids(fixtureScript)) kill(pid, "SIGKILL");
-          kill(service.child.pid, "SIGKILL");
+          service.child.kill("SIGKILL");
           await bounded(service.finished);
         }
       }
     } finally {
       for (const pid of await pids(fixtureScript)) kill(pid, "SIGKILL");
-      await Deno.remove(dir, { recursive: true });
+      await rm(dir, { recursive: true });
     }
   }
 }
@@ -236,14 +290,14 @@ const health = (port: number) =>
   });
 
 for (const mode of ["quick default", "quick custom", "token", "token file"]) {
-  Deno.test(`user Given ${mode} configuration When the entrypoint starts Then local server and tunnel receive isolated configuration`, () =>
+  test(`user Given ${mode} configuration When the entrypoint starts Then local server and tunnel receive isolated configuration`, () =>
     withFixture(async (f) => {
       const env: Record<string, string> = {};
-      if (mode !== "quick default") env.PORT = String(unusedPort());
+      if (mode !== "quick default") env.PORT = String(await unusedPort());
       if (mode === "token") env.TUNNEL_TOKEN = "test-only-token";
       if (mode === "token file") {
         env.TUNNEL_TOKEN_FILE = `${f.dir}/token`;
-        await Deno.writeTextFile(
+        await writeFile(
           env.TUNNEL_TOKEN_FILE,
           "test-only-file-token\n",
         );
@@ -286,9 +340,9 @@ for (const mode of ["quick default", "quick custom", "token", "token file"]) {
     }));
 }
 for (const signal of ["SIGTERM", "SIGINT"] as const) {
-  Deno.test(`user Given a running server and tunnel When the entrypoint receives ${signal} Then both children terminate and the entrypoint succeeds`, () =>
+  test(`user Given a running server and tunnel When the entrypoint receives ${signal} Then both children terminate and the entrypoint succeeds`, () =>
     withFixture(async (f) => {
-      const service = f.start({ PORT: String(unusedPort()) }),
+      const service = f.start({ PORT: String(await unusedPort()) }),
         server = await service.event("server");
       await service.event("tunnel");
       service.child.kill(signal);
@@ -301,15 +355,15 @@ for (const signal of ["SIGTERM", "SIGINT"] as const) {
 }
 for (const role of ["server", "tunnel"] as const) {
   for (const code of [0, 23]) {
-    Deno.test(`user Given a running server and tunnel When the ${role} exits with code ${code} Then the entrypoint fails and terminates its remaining child`, () =>
+    test(`user Given a running server and tunnel When the ${role} exits with code ${code} Then the entrypoint fails and terminates its remaining child`, () =>
       withFixture(async (f) => {
         const service = f.start({
-          PORT: String(unusedPort()),
+          PORT: String(await unusedPort()),
           FIXTURE_EXIT_CODE: String(code),
         });
         const server = await service.event("server"),
           tunnel = await service.event("tunnel");
-        Deno.kill((role === "server" ? server : tunnel).pid, "SIGUSR1");
+        kill((role === "server" ? server : tunnel).pid, "SIGUSR1");
         assert.equal((await service.status()).code, code || 1);
         assert.equal(
           (await service.event(
@@ -322,13 +376,13 @@ for (const role of ["server", "tunnel"] as const) {
       }));
   }
 }
-Deno.test("user Given no cloudflared executable on PATH When tunnel spawn throws Then the entrypoint fails without leaving its server running", () =>
+test("user Given no cloudflared executable on PATH When tunnel spawn fails Then the entrypoint fails without leaving its server running", () =>
   withFixture(async (f) => {
-    await Deno.remove(`${f.dir}/bin/cloudflared`);
-    const port = unusedPort(), service = f.start({ PORT: String(port) });
+    await rm(`${f.dir}/bin/cloudflared`);
+    const port = await unusedPort(), service = f.start({ PORT: String(port) });
     assert.equal((await service.status()).code, 1);
     assert.match(service.stderr(), /cloudflared/);
-    assert.match(service.stderr(), /NotFound|No such file/);
+    assert.match(service.stderr(), /ENOENT|No such file/);
     // Failure can precede server readiness; closed inherited pipes + /proc and
     // refused HTTP prove cleanup even in that startup race.
     await f.stopped(port);
@@ -344,9 +398,9 @@ for (
     1,
   ]] as const
 ) {
-  Deno.test(`user Given ${name} on the local health endpoint When the real healthcheck runs Then it exits with code ${exitCode}`, () =>
+  test(`user Given ${name} on the local health endpoint When the real healthcheck runs Then it exits with code ${exitCode}`, () =>
     withFixture(async (f) => {
-      const port = unusedPort();
+      const port = await unusedPort();
       if (httpStatus !== undefined) {
         const service = f.start({
           PORT: String(port),
@@ -358,13 +412,11 @@ for (
         assert.equal(response.status, httpStatus);
         await response.body?.cancel();
       }
-      const result = await run(f.dir, [
-        "--allow-net",
-        "--allow-env=PORT",
-        script("healthcheck"),
-      ], { PORT: String(port) });
+      const result = await run(f.dir, [script("healthcheck")], {
+        PORT: String(port),
+      });
       assert.equal(result.code, exitCode);
-      assert.equal(new TextDecoder().decode(result.stderr), "");
+      assert.equal(result.stderr, "");
     }));
 }
 
@@ -387,7 +439,7 @@ for (
       name: "a missing nested asset",
       report: {},
       file: "missing",
-      error: /NotFound|No such file/,
+      error: /ENOENT|No such file/,
     },
     {
       name: "an empty nested font",
@@ -403,16 +455,13 @@ for (
     },
   ]
 ) {
-  Deno.test(`user Given ${scenario.name} When build asset verification runs Then it ${scenario.error ? "rejects" : "accepts"} the resource bundle`, async () => {
-    const dir = await Deno.makeTempDir({
-      dir: "/tmp",
-      prefix: "stronghold-assets-test-",
-    });
+  test(`user Given ${scenario.name} When build asset verification runs Then it ${scenario.error ? "rejects" : "accepts"} the resource bundle`, async () => {
+    const dir = await mkdtemp("/tmp/stronghold-assets-test-");
     try {
       for (const path of [".cache", "data", "public/assets", "public/fonts"]) {
-        await Deno.mkdir(`${dir}/${path}`, { recursive: true });
+        await mkdir(`${dir}/${path}`, { recursive: true });
       }
-      await Deno.writeTextFile(
+      await writeFile(
         `${dir}/.cache/assets-report.json`,
         JSON.stringify({
           fontErrors: [],
@@ -420,7 +469,7 @@ for (
           ...scenario.report,
         }),
       );
-      await Deno.writeTextFile(
+      await writeFile(
         `${dir}/data/assets.json`,
         JSON.stringify({
           nested: [{
@@ -432,21 +481,21 @@ for (
         }),
       );
       const asset = `${dir}/public/assets/icon.svg`;
-      if (scenario.file === "directory") await Deno.mkdir(asset);
+      if (scenario.file === "directory") await mkdir(asset);
       else if (scenario.file !== "missing") {
-        await Deno.writeTextFile(asset, "fixture asset");
+        await writeFile(asset, "fixture asset");
       }
-      await Deno.writeTextFile(
+      await writeFile(
         `${dir}/public/fonts/text.woff2`,
         scenario.file === "empty" ? "" : "fixture font",
       );
-      const result = await run(dir, ["--allow-read", script("verify-assets")]);
+      const result = await run(dir, [script("verify-assets")]);
       assert.equal(result.code, scenario.error ? 1 : 0);
-      const stderr = new TextDecoder().decode(result.stderr);
+      const stderr = result.stderr;
       if (scenario.error) assert.match(stderr, scenario.error);
       else assert.equal(stderr, "");
     } finally {
-      await Deno.remove(dir, { recursive: true });
+      await rm(dir, { recursive: true });
     }
   });
 }

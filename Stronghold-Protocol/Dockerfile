@@ -16,7 +16,6 @@ RUN --mount=type=bind,from=src_dir,source=./package.json,target=./package.json \
     && rm -rf /tmp/npm-cache /root/.npm
 
 FROM deps AS assets
-ARG FETCH_ASSETS=1
 COPY --link --from=src_dir ./package.json ./package.json
 COPY --link --from=src_dir ./shared ./shared
 COPY --link --from=src_dir ./server ./server
@@ -25,10 +24,10 @@ COPY --link --from=src_dir ./data ./data
 COPY --link --from=src_dir ./public ./public
 COPY --link --from=src_dir ./docs/research ./docs/research
 COPY --link --from=src_dir ./LICENSE ./NOTICE.md ./THIRD-PARTY-NOTICES.md ./
+RUN deno run -A --no-lock --node-modules-dir=manual tools/vendor.mjs
 COPY --link ./verify-assets.ts /usr/local/lib/stronghold-protocol/verify-assets.ts
-COPY --link ./entrypoint.ts ./healthcheck.ts /runtime/usr/local/lib/stronghold-protocol/
-RUN deno run -A --no-lock --node-modules-dir=manual tools/vendor.mjs \
-    && case "$FETCH_ASSETS" in \
+ARG FETCH_ASSETS=0
+RUN case "$FETCH_ASSETS" in \
         1) deno run -A --no-lock --node-modules-dir=manual tools/fetch-assets.mjs \
             && deno run --allow-read /usr/local/lib/stronghold-protocol/verify-assets.ts ;; \
         0) ;; \
@@ -36,24 +35,21 @@ RUN deno run -A --no-lock --node-modules-dir=manual tools/vendor.mjs \
     esac \
     && deno cache --no-lock --node-modules-dir=manual server/index.js \
     && rm -rf .cache tools \
+    && mkdir /runtime \
     && mv /app /deno-dir /runtime/ \
-    && chmod -R u=rwX,go=rX /runtime \
-    && chmod 0644 /runtime/usr/local/lib/stronghold-protocol/*.ts \
     && chown -R 1993:1993 /runtime/deno-dir
 
 FROM dhi.io/deno:2.9.7-debian13@sha256:6f0d61dbec987508d26ec6a3e95a6f67c3332221f05958ebd3a661064f60e0f4
-ENV NODE_ENV=production \
-    PORT=3000 \
-    HOST=0.0.0.0
 WORKDIR /app
 COPY --link --from=catatonit /usr/bin/catatonit /usr/bin/catatonit
 COPY --link --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
-# Copy complete directories so --link preserves their modes and cache ownership.
-COPY --link --from=assets /runtime/ /
+# Include the cache directory itself to preserve ownership with --link.
+COPY --link --chmod=u=rwX,go=rX --from=assets /runtime/ /
+COPY --link --chmod=u=rwX,go=rX ./entrypoint.ts ./healthcheck.ts /usr/local/lib/stronghold-protocol/
 
 USER 1993:1993
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD ["/usr/local/bin/deno", "run", "--allow-net", "--allow-env=PORT", "/usr/local/lib/stronghold-protocol/healthcheck.ts"]
 ENTRYPOINT ["/usr/bin/catatonit", "--", "/usr/local/bin/deno", "run", "--allow-run=/usr/local/bin/deno,/usr/local/bin/cloudflared", "--allow-read", "--allow-env", "/usr/local/lib/stronghold-protocol/entrypoint.ts"]
-CMD ["server/index.js"]
+CMD ["/usr/local/bin/deno", "run", "--cached-only", "--no-lock", "--node-modules-dir=manual", "--allow-net", "--allow-read", "--allow-env", "--allow-sys", "server/index.js"]

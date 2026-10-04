@@ -56,14 +56,14 @@ jobs:
           image=$(awk '$1 == "FROM" && $2 ~ /^dhi.io\/deno:.*-dev@/ { print $2; exit }' collection/Stronghold-Protocol/Dockerfile)
           docker run --rm --entrypoint /usr/local/bin/deno \
             --mount "type=bind,source=$PWD/collection/Stronghold-Protocol,target=/tests,readonly" \
+            --env 'TEST_RUNTIME_ARGS=["run","-A","--no-config","--no-lock"]' \
             --workdir /tests "$image" test -A entrypoint_test.ts
-      - name: Use private build context permissions
-        run: chmod -R go-rwx upstream collection/Stronghold-Protocol
       - name: Build test image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./collection/Stronghold-Protocol
           build-contexts: src_dir=./upstream
+          build-args: FETCH_ASSETS=1
           platforms: ${{ matrix.platform }}
           load: true
           tags: stronghold-protocol:test
@@ -94,6 +94,7 @@ jobs:
         with:
           context: ./collection/Stronghold-Protocol
           build-contexts: src_dir=./upstream
+          build-args: FETCH_ASSETS=1
           push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=stronghold-protocol-${{ matrix.platform }}

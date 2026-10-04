@@ -1,73 +1,59 @@
-const children = new Set<Deno.ChildProcess>();
+import { type ChildProcess, spawn } from "node:child_process";
+import process from "node:process";
+
+const children = new Map<ChildProcess, Promise<number>>();
 const stopped = Promise.withResolvers<number>();
 const onStop = () => stopped.resolve(0);
-Deno.addSignalListener("SIGTERM", onStop);
-Deno.addSignalListener("SIGINT", onStop);
+process.on("SIGTERM", onStop);
+process.on("SIGINT", onStop);
 
 function start(
   command: string,
   args: string[],
-  env: Record<string, string> = {},
-): Promise<Deno.CommandStatus> {
-  const child = new Deno.Command(command, {
-    args,
+  env = process.env,
+): Promise<number> {
+  const child = spawn(command, args, {
     env,
-    stdin: "null",
-    stdout: "inherit",
-    stderr: "inherit",
-  }).spawn();
-  children.add(child);
-  return child.status.then((status) => {
-    children.delete(child);
-    return status;
+    stdio: ["ignore", "inherit", "inherit"],
   });
+  const status = new Promise<number>((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", (code) => {
+      children.delete(child);
+      resolve(code || 1);
+    });
+  });
+  children.set(child, status);
+  return status;
 }
 
-function signalChildren(signal: Deno.Signal) {
-  for (const child of children) {
-    try {
-      child.kill(signal);
-    } catch (error) {
-      // A child can exit before Deno receives its status.
-      if (!(error instanceof Deno.errors.NotFound)) throw error;
-    }
-  }
+function signalChildren(signal: NodeJS.Signals) {
+  for (const child of children.keys()) child.kill(signal);
 }
 
 let exitCode = 1;
 try {
-  const serverStatus = start(Deno.execPath(), [
-    "run",
-    "--cached-only",
-    "--no-lock",
-    "--node-modules-dir=manual",
-    "--allow-net",
-    "--allow-read",
-    "--allow-env",
-    "--allow-sys",
-    ...Deno.args,
-  ], { TUNNEL_TOKEN: "", TUNNEL_TOKEN_FILE: "" });
+  const serverEnv = { ...process.env };
+  delete serverEnv.TUNNEL_TOKEN;
+  delete serverEnv.TUNNEL_TOKEN_FILE;
+  const serverStatus = start(process.argv[2], process.argv.slice(3), serverEnv);
   const tunnelArgs = ["tunnel", "--no-autoupdate"];
-  if (Deno.env.get("TUNNEL_TOKEN") || Deno.env.get("TUNNEL_TOKEN_FILE")) {
+  if (process.env.TUNNEL_TOKEN || process.env.TUNNEL_TOKEN_FILE) {
     tunnelArgs.push("run");
   } else {
-    const port = Deno.env.get("PORT") || "3000";
+    const port = process.env.PORT || "3000";
     tunnelArgs.push("--url", `http://127.0.0.1:${port}`);
   }
   const tunnelStatus = start("cloudflared", tunnelArgs);
-  exitCode = await Promise.race([
-    stopped.promise,
-    serverStatus.then((status) => status.code || 1),
-    tunnelStatus.then((status) => status.code || 1),
-  ]);
+  exitCode = await Promise.race([stopped.promise, serverStatus, tunnelStatus]);
 } catch (error) {
   console.error("Cannot start Stronghold-Protocol or cloudflared:", error);
 } finally {
   signalChildren("SIGTERM");
   const timeout = setTimeout(() => signalChildren("SIGKILL"), 5000);
-  await Promise.all([...children].map((child) => child.status));
+  await Promise.allSettled(children.values());
   clearTimeout(timeout);
-  Deno.removeSignalListener("SIGTERM", onStop);
-  Deno.removeSignalListener("SIGINT", onStop);
+  process.off("SIGTERM", onStop);
+  process.off("SIGINT", onStop);
 }
-Deno.exit(exitCode);
+process.exit(exitCode);
