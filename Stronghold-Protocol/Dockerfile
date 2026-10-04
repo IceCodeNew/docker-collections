@@ -37,7 +37,7 @@ RUN --mount=type=bind,source=./verify-assets.ts,target=/verify-assets.ts \
     && rm -rf .cache tools /tmp/assets-cache \
     && chown -R 1993:1993 /deno-dir
 
-FROM dhi.io/deno:2.9.7-debian13@sha256:6f0d61dbec987508d26ec6a3e95a6f67c3332221f05958ebd3a661064f60e0f4 AS runtime
+FROM dhi.io/deno:2.9.7-debian13@sha256:862b393c397b773076121d0a87263bfe9eafa2e79a8609982e0e2749b1c332be AS runtime
 WORKDIR /app
 COPY --link --from=catatonit /usr/bin/catatonit /usr/bin/catatonit
 COPY --link --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
