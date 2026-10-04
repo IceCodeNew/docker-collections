@@ -1,8 +1,5 @@
 {
   "forkProcessing": "enabled",
-  "registryAliases": {
-    "dhi.io": "dhi.io"
-  },
 
   "customManagers": [
     {

@@ -5,6 +5,7 @@ on:
   push:
     branches:
     - 'master'
+    - 'renovate/**'
     paths:
     - '.github/workflows/Stronghold-Protocol.yml'
     - 'Stronghold-Protocol/**'
@@ -21,8 +22,11 @@ env:
 
 jobs:
   stronghold-protocol:
-    # DHI pulls require credentials unavailable to fork PRs.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # DHI credentials are unavailable to forks; Renovate branches use push validation.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       !startsWith(github.head_ref, 'renovate/'))
     name: stronghold-protocol
     runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
@@ -42,8 +46,6 @@ jobs:
           persist-credentials: false
           repository: sganggs/Stronghold-Protocol
           ref: ${{ env.STRONGHOLD_PROTOCOL_VERSION }}
-      - name: Record upstream source
-        run: git -C upstream rev-parse HEAD
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Login to DHI
@@ -53,7 +55,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Login to Docker Hub
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -93,7 +95,7 @@ jobs:
           done
           exit 1
       - name: Build and push by digest
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -105,14 +107,14 @@ jobs:
           cache-from: type=gha,scope=stronghold-protocol-${{ matrix.platform }}
           outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       - name: Export digest
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         env:
           digest: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/stronghold-protocol-digests/
           touch "/tmp/stronghold-protocol-digests/${digest#sha256:}"
       - name: Upload digest
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: stronghold-protocol-digests-${{ strategy.job-index }}
@@ -121,7 +123,7 @@ jobs:
           retention-days: 1
 
   stronghold-protocol-multiarch:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-24.04
     needs: stronghold-protocol
     steps:
