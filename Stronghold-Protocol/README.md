@@ -93,7 +93,7 @@ To validate with the Deno engine from `Dockerfile`:
 deno fmt --check Stronghold-Protocol/*.ts
 deno lint Stronghold-Protocol/*.ts
 deno check Stronghold-Protocol/*.ts
-TEST_RUNTIME_ARGS='["run","-A","--no-config","--no-lock"]' \
+TEST_RUNTIME_ARGS='["run","--allow-read","--allow-net","--allow-env","--allow-run"]' \
   deno test -A Stronghold-Protocol/entrypoint_test.ts
 ```
 
