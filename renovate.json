@@ -68,6 +68,18 @@
     },
     {
       "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["sganggs/Stronghold-Protocol"],
+      "minimumReleaseAge": null,
+      "groupName": "Stronghold-Protocol"
+    },
+    {
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["sganggs/Stronghold-Protocol"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "matchDatasources": ["github-releases"],
       "matchPackageNames": ["router-for-me/CLIProxyAPI"],
       "minimumReleaseAge": null,
       "ignoreTests": true,
