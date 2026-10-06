@@ -1,4 +1,4 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
+# syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
 # renovate: datasource=docker packageName=library/haproxy versioning=docker
 ARG HAPROXY_VERSION=3.4.2-alpine
@@ -56,7 +56,7 @@ RUN readelf -p .comment /haproxy \
     && libtree -vvv /haproxy
 
 
-FROM mirror.gcr.io/library/haproxy:3.4.2-alpine@sha256:0878b11eb64c433be1b0f578a584b8aca12f6caaa64c8f239b8b556c0dd5eeeb AS assets
+FROM mirror.gcr.io/library/haproxy:3.4.6-alpine@sha256:7af8255207ee9964ccb4eec8ce4b7a40b777769665e3ae83897fb01b24d8a43a AS assets
 USER root
 RUN apk update \
     && apk --no-progress --no-cache add \

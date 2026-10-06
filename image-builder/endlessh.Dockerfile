@@ -1,4 +1,4 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
+# syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
 FROM mirror.gcr.io/icecodexi/image-builder:modern-toolbox-fedora@sha256:cf9fea3fe9ad18316af391e0ae07d5480da1fa0cc9fa106e98cf58590a373cdc AS build-env
 WORKDIR /endlessh

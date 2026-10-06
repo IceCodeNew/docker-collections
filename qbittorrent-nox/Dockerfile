@@ -1,4 +1,4 @@
-# syntax=mirror.gcr.io/docker/dockerfile:1.25.0@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
+# syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
 FROM cgr.dev/chainguard/curl:latest-dev@sha256:b3d60079e7b845d537b60c11436e92773897d483d59bb0b6407c15eb34b924fb AS assets
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
