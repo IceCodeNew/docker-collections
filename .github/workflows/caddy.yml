@@ -13,7 +13,7 @@ on:
 env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/caddy
   # renovate: datasource=github-releases depName=caddy packageName=caddyserver/caddy
-  CADDY_VERSION: v2.11.4
+  CADDY_VERSION: v2.11.7
 
 jobs:
   images:
@@ -37,7 +37,7 @@ jobs:
           cache: false
           go-version: 'stable'
       - name: Install xcaddy
-        uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
         with:
           mise_toml: |
             [tools]
