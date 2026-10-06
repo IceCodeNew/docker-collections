@@ -29,7 +29,7 @@ ARG FETCH_ASSETS=0
 RUN --mount=type=bind,source=./verify-assets.ts,target=/verify-assets.ts \
     export DENO_DIR=/tmp/assets-cache \
     && case "$FETCH_ASSETS" in \
-        1) deno run --allow-read --allow-write --allow-net --allow-env=DEBUG tools/fetch-assets.mjs \
+        1) deno run --allow-read --allow-write --allow-net --allow-env=DEBUG,SP_ASSET_SOURCE,SP_GITHUB_PROXY tools/fetch-assets.mjs \
             && deno run --allow-read /verify-assets.ts ;; \
         0) ;; \
         *) echo 'FETCH_ASSETS must be 0 or 1.' >&2; exit 1 ;; \
