@@ -25,13 +25,37 @@ docker buildx build --load \
   --tag stronghold-protocol ./Stronghold-Protocol
 ```
 
-Asset downloads are disabled by default. Add `--build-arg FETCH_ASSETS=1` to enable them.
-The image workflow enables downloads for published images.
-The build stops if the download report has errors or a manifest file is missing or empty.
+Asset downloads are disabled by default. To enable them locally, pass both
+`--build-arg FETCH_ASSETS=1` and `--build-arg ASSET_SOURCE_REVISIONS_SHA256=<value>`.
+If you cannot resolve source revisions, generate a fresh value (for example,
+`openssl rand -hex 32`) for each local build to force a new download.
+The image workflow downloads assets once in an amd64 `asset_bundle` target, then
+passes the architecture-independent bundle to both platform builds. The two
+platform jobs start in parallel after that export completes.
+If the optional download or asset verification fails, the workflow exports the
+upstream fallback graphics instead and does not cache the failed download.
+Local builds with `FETCH_ASSETS=1` fail when the download report has errors or
+a manifest file is missing or empty.
 Some optional models have no public source and use upstream fallback graphics.
 Asset sources can change independently of the application release.
+The image workflow fingerprints the Git branches named in upstream
+`tools/assets/sources.mjs` before each build. It keeps the downloaded asset
+layer in a separate GHA cache and rebuilds it when any source branch advances.
+For a local asset build, pass the same fingerprint to Docker to avoid reusing
+assets after their source branches change:
 
-Without downloads, the game uses placeholder graphics unless you mount assets and their matching manifest.
+```sh
+fingerprint=$(python3 Stronghold-Protocol/asset_source_revisions.py \
+  /tmp/stronghold-source/tools/assets/sources.mjs)
+docker buildx build --load \
+  --build-context src_dir=/tmp/stronghold-source \
+  --build-arg FETCH_ASSETS=1 \
+  --build-arg ASSET_SOURCE_REVISIONS_SHA256="$fingerprint" \
+  --tag stronghold-protocol ./Stronghold-Protocol
+```
+
+A local build without downloads or an asset bundle uses placeholder graphics
+unless you mount assets and their matching manifest.
 
 ## Run with a temporary tunnel
 

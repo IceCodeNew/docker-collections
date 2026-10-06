@@ -21,12 +21,96 @@ env:
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
-  stronghold-protocol:
+  asset_bundle:
     # DHI credentials are unavailable to forks; Renovate branches use push validation.
     if: >-
       github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
        !startsWith(github.head_ref, 'renovate/'))
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: collection
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: upstream
+          persist-credentials: false
+          repository: sganggs/Stronghold-Protocol
+          ref: ${{ env.STRONGHOLD_PROTOCOL_VERSION }}
+      - name: Resolve asset source revisions
+        id: asset_sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! fingerprint=$(python3 collection/Stronghold-Protocol/asset_source_revisions.py upstream/tools/assets/sources.mjs); then
+            echo '::warning::Could not resolve asset source revisions; forcing a fresh download attempt.'
+            fingerprint=$(openssl rand -hex 32)
+          fi
+          printf 'fingerprint=%s\n' "$fingerprint" >> "$GITHUB_OUTPUT"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Login to DHI
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: dhi.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Fetch optional assets
+        id: fetch_assets
+        continue-on-error: true
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./collection/Stronghold-Protocol
+          build-contexts: src_dir=./upstream
+          target: asset_bundle
+          build-args: |
+            FETCH_ASSETS=1
+            ASSET_SOURCE_REVISIONS_SHA256=${{ steps.asset_sources.outputs.fingerprint }}
+          platforms: linux/amd64
+          outputs: type=local,dest=/tmp/stronghold-protocol-assets
+          cache-from: type=gha,scope=stronghold-protocol-assets
+      - name: Cache fetched assets
+        if: steps.fetch_assets.outcome == 'success'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./collection/Stronghold-Protocol
+          build-contexts: src_dir=./upstream
+          target: asset_bundle
+          build-args: |
+            FETCH_ASSETS=1
+            ASSET_SOURCE_REVISIONS_SHA256=${{ steps.asset_sources.outputs.fingerprint }}
+          platforms: linux/amd64
+          cache-from: type=gha,scope=stronghold-protocol-assets
+          cache-to: type=gha,mode=min,scope=stronghold-protocol-assets
+      - name: Warn about unavailable optional assets
+        if: steps.fetch_assets.outcome == 'failure'
+        shell: bash
+        run: |
+          echo '::warning::Optional art download failed; building with upstream fallback graphics.'
+          rm -rf /tmp/stronghold-protocol-assets
+      - name: Build fallback asset bundle
+        if: steps.fetch_assets.outcome == 'failure'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./collection/Stronghold-Protocol
+          build-contexts: src_dir=./upstream
+          target: asset_bundle
+          build-args: FETCH_ASSETS=0
+          platforms: linux/amd64
+          outputs: type=local,dest=/tmp/stronghold-protocol-assets
+          cache-from: type=gha,scope=stronghold-protocol-assets
+      - name: Upload asset bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: stronghold-protocol-assets
+          path: /tmp/stronghold-protocol-assets/
+          if-no-files-found: error
+          retention-days: 1
+
+  stronghold-protocol:
+    needs: asset_bundle
     name: stronghold-protocol
     runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     strategy:
@@ -46,6 +130,11 @@ jobs:
           persist-credentials: false
           repository: sganggs/Stronghold-Protocol
           ref: ${{ env.STRONGHOLD_PROTOCOL_VERSION }}
+      - name: Download asset bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: stronghold-protocol-assets
+          path: ./asset-bundle
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Login to DHI
@@ -64,10 +153,12 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./collection/Stronghold-Protocol
-          build-contexts: src_dir=./upstream
+          build-contexts: |
+            src_dir=./upstream
+            asset_bundle=./asset-bundle
           target: tested
           build-args: |
-            FETCH_ASSETS=${{ github.event_name == 'pull_request' && '1' || '0' }}
+            FETCH_ASSETS=0
             "TEST_RUNTIME_ARGS=[""run"",""--allow-read"",""--allow-net"",""--allow-env"",""--allow-run""]"
           platforms: ${{ matrix.platform }}
           load: true
@@ -100,8 +191,10 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./collection/Stronghold-Protocol
-          build-contexts: src_dir=./upstream
-          build-args: FETCH_ASSETS=1
+          build-contexts: |
+            src_dir=./upstream
+            asset_bundle=./asset-bundle
+          build-args: FETCH_ASSETS=0
           push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=stronghold-protocol-${{ matrix.platform }}
