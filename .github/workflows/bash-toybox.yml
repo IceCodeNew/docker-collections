@@ -15,7 +15,7 @@ on:
 env:
   TOYBOX_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox
   # renovate: datasource=github-tags depName=toybox packageName=landley/toybox
-  TOYBOX_VERSION: 0.8.14
+  TOYBOX_VERSION: 0.8.15
 
 jobs:
   bash-toybox:
