@@ -26,10 +26,15 @@ RUN DENO_DIR=/tmp/vendor-cache deno run --allow-read --allow-write tools/vendor.
     && rm -rf /tmp/vendor-cache \
     && deno cache server/index.js
 ARG FETCH_ASSETS=0
+ARG ASSET_SOURCE_REVISIONS_SHA256
 RUN --mount=type=bind,source=./verify-assets.ts,target=/verify-assets.ts \
     export DENO_DIR=/tmp/assets-cache \
     && case "$FETCH_ASSETS" in \
-        1) for attempt in 1 2 3; do \
+        1) if [ -z "$ASSET_SOURCE_REVISIONS_SHA256" ]; then \
+               echo 'ASSET_SOURCE_REVISIONS_SHA256 is required when fetching assets.' >&2; \
+               exit 1; \
+           fi; \
+           for attempt in 1 2 3; do \
                if deno run --allow-read --allow-write --allow-net --allow-env=DEBUG,SP_ASSET_SOURCE,SP_GITHUB_PROXY tools/fetch-assets.mjs; then \
                    break; \
                fi; \
@@ -41,7 +46,13 @@ RUN --mount=type=bind,source=./verify-assets.ts,target=/verify-assets.ts \
         *) echo 'FETCH_ASSETS must be 0 or 1.' >&2; exit 1 ;; \
     esac \
     && rm -rf .cache tools /tmp/assets-cache \
+    && mkdir -p public/assets public/fonts \
     && chown -R 1993:1993 /deno-dir
+
+# Files are architecture-independent; export them once from the amd64 asset build.
+FROM scratch AS asset_bundle
+COPY --link --parents --from=assets \
+    /app/./public/assets /app/./public/fonts /app/./data/assets.json /
 
 FROM dhi.io/deno:2.9.7-debian13@sha256:862b393c397b773076121d0a87263bfe9eafa2e79a8609982e0e2749b1c332be AS runtime
 WORKDIR /app
@@ -49,6 +60,7 @@ COPY --link --from=catatonit /usr/bin/catatonit /usr/bin/catatonit
 COPY --link --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
 # Include parent entries to preserve cache ownership with --link.
 COPY --link --parents --chmod=u=rwX,go=rX --from=assets /./app /./deno-dir /
+COPY --link --chmod=u=rwX,go=rX --from=asset_bundle / /app/
 COPY --link --chmod=u=rwX,go=rX ./entrypoint.ts ./healthcheck.ts /usr/local/lib/stronghold-protocol/
 
 USER 1993:1993
