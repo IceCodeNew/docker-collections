@@ -70,12 +70,7 @@
       "matchDatasources": ["github-releases"],
       "matchPackageNames": ["sganggs/Stronghold-Protocol"],
       "minimumReleaseAge": null,
-      "groupName": "Stronghold-Protocol"
-    },
-    {
-      "matchDatasources": ["github-releases"],
-      "matchPackageNames": ["sganggs/Stronghold-Protocol"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Stronghold-Protocol",
       "automerge": true
     },
     {
