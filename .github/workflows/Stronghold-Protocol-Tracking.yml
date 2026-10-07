@@ -1,0 +1,127 @@
+name: Stronghold-Protocol Fork Tracking
+permissions: {}
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
+
+jobs:
+  sync-fork:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 */12 * * *'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [master, dev]
+    steps:
+      - name: Sync fork branch with its upstream branch
+        env:
+          GH_TOKEN: ${{ secrets.UPDATE_WORKFLOW_TOKEN }}
+          BRANCH: ${{ matrix.branch }}
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/IceCodeNew/Stronghold-Protocol/merge-upstream \
+            --field "branch=$BRANCH" --jq '.message'
+
+  track-dev:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/15 * * * *'
+    permissions:
+      actions: write
+    concurrency:
+      group: stronghold-protocol-dev-tracking
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Find review commit and matching upstream release image
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          fork_url=https://github.com/IceCodeNew/Stronghold-Protocol.git
+          upstream_url=https://github.com/sganggs/Stronghold-Protocol.git
+          source_sha=$(git ls-remote "$fork_url" refs/heads/review-all-in-one | cut -f1)
+          [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+
+          git ls-remote --tags "$upstream_url" > /tmp/upstream-tags.txt
+          mapfile -t tags < <(awk -v sha="$source_sha" '$1 == sha {
+              tag = $2
+              sub(/^refs\/tags\//, "", tag)
+              sub(/\^\{\}$/, "", tag)
+              if (tag ~ /^v[0-9]+\.[0-9]+\.[0-9]+$/) print tag
+            }' /tmp/upstream-tags.txt | sort -uV)
+          for ((i=${#tags[@]}-1; i>=0; i--)); do
+            if docker buildx imagetools inspect "${REGISTRY_IMAGE}:${tags[i]}" >/dev/null 2>&1; then
+              echo "release_tag=${tags[i]}" >> "$GITHUB_OUTPUT"
+              break
+            fi
+          done
+          if ((${#tags[@]})); then
+            echo 'has_upstream_tag=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Compare current dev image
+        id: current
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          RELEASE_TAG: ${{ steps.source.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if ! docker buildx imagetools inspect "$REGISTRY_IMAGE:dev" \
+            --format '{{json .Manifest}}' > /tmp/dev-manifest.json 2>/dev/null; then
+            echo 'up_to_date=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -n "$RELEASE_TAG" ]]; then
+            docker buildx imagetools inspect "$REGISTRY_IMAGE:$RELEASE_TAG" \
+              --format '{{json .Manifest}}' > /tmp/release-manifest.json
+            if [[ $(jq -r '.digest' /tmp/dev-manifest.json) == \
+                  $(jq -r '.digest' /tmp/release-manifest.json) ]]; then
+              echo 'up_to_date=true' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          elif [[ $(jq -r '.annotations["org.opencontainers.image.revision"] // empty' \
+                       /tmp/dev-manifest.json) == "$SOURCE_SHA" ]]; then
+            echo 'up_to_date=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo 'up_to_date=false' >> "$GITHUB_OUTPUT"
+      - name: Login to Docker Hub
+        if: steps.current.outputs.up_to_date != 'true' && steps.source.outputs.release_tag != ''
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Point dev to the existing release image
+        if: steps.current.outputs.up_to_date != 'true' && steps.source.outputs.release_tag != ''
+        env:
+          RELEASE_TAG: ${{ steps.source.outputs.release_tag }}
+        run: |
+          docker buildx imagetools create --tag "$REGISTRY_IMAGE:dev" \
+            "$REGISTRY_IMAGE:$RELEASE_TAG"
+      - name: Build the untagged review commit
+        if: steps.current.outputs.up_to_date != 'true' && steps.source.outputs.has_upstream_tag != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if gh run list --workflow Stronghold-Protocol.yml --limit 50 \
+            --json displayTitle,status |
+            jq -e --arg title "dev $SOURCE_SHA" \
+              'any(.[]; .displayTitle == $title and .status != "completed")' >/dev/null; then
+            echo "Build for $SOURCE_SHA is already running."
+          else
+            gh workflow run Stronghold-Protocol.yml --ref master --field "source_sha=$SOURCE_SHA"
+          fi
+      - name: Wait for the matching release image
+        if: steps.current.outputs.up_to_date != 'true' && steps.source.outputs.has_upstream_tag == 'true' && steps.source.outputs.release_tag == ''
+        run: echo 'Upstream tag matches the review commit; its formal image is not published yet.'
