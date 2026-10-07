@@ -14,11 +14,11 @@ ENV TZ=Asia/Taipei
 ENV LD_PRELOAD=/usr/lib/libsnmallocshim-checks.so
 ENV PYTHONUNBUFFERED=x
 
-COPY --link --from=acfun   --chown=65532:65532 \
+COPY --link --from=acfun   --chown=65532 \
     /ko-app/       /ko-app/
-COPY --link --from=aixifan --chown=65532:65532 \
+COPY --link --from=aixifan --chown=65532 \
     /home/nonroot/ /home/nonroot/
-COPY --link --from=lowapk  --chown=65532:65532 \
+COPY --link --from=lowapk  --chown=65532 \
     /home/nonroot/ /home/nonroot/
 
 WORKDIR /var/run/ko/

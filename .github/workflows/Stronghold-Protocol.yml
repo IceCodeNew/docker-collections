@@ -228,6 +228,8 @@ jobs:
           path: ./asset-bundle
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       - name: Login to DHI
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
@@ -254,7 +256,7 @@ jobs:
           load: true
           tags: stronghold-protocol:test
           cache-from: type=gha,scope=stronghold-protocol-${{ inputs.source_sha != '' && 'dev-' || '' }}${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=stronghold-protocol-${{ inputs.source_sha != '' && 'dev-' || '' }}${{ matrix.platform }}
+          cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,mode=min,scope=stronghold-protocol-{0}{1}', inputs.source_sha != '' && 'dev-' || '', matrix.platform) || '' }}
       - name: Test image without a public tunnel
         shell: bash
         run: |
@@ -291,7 +293,6 @@ jobs:
           build-contexts: |
             src_dir=./upstream
             asset_bundle=./asset-bundle
-          push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=stronghold-protocol-${{ inputs.source_sha != '' && 'dev-' || '' }}${{ matrix.platform }}
           outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
@@ -327,6 +328,8 @@ jobs:
           merge-multiple: true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       - name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:

@@ -54,37 +54,25 @@ jobs:
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and load the current arch image to local daemon
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: "{{defaultContext}}:registry"
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_VERSION }}
-      - name: Smoke Test
-        env:
-          REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
-          REGISTRY_VERSION: ${{ env.REGISTRY_VERSION }}
-        run: |
-          docker save -o "registry.tar" "${REGISTRY_IMAGE}:${REGISTRY_VERSION}"
       - name: Build and push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: "{{defaultContext}}:registry"
-          push: true
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,push=true
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_VERSION }}
             ${{ env.REGISTRY_IMAGE }}:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: Inspect image
         env:
@@ -96,5 +84,5 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          input: "registry.tar"
+          image-ref: ${{ env.REGISTRY_IMAGE }}:${{ env.REGISTRY_VERSION }}
           format: "table"

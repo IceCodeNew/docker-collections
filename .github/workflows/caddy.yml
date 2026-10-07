@@ -46,7 +46,6 @@ jobs:
         env:
           _TARGETARCH: ${{ matrix.platform }}
         run: |
-          set -euo pipefail
           go env -w CGO_ENABLED=0
           case "$_TARGETARCH" in \
               linux/amd64) \
@@ -59,18 +58,12 @@ jobs:
 
           export XCADDY_SETCAP=1
           export XCADDY_GO_BUILD_FLAGS="-trimpath -ldflags '-w -s'"
-          for attempt in 1 2 3; do
-            if xcaddy build \
-                --with github.com/caddy-dns/cloudflare@master \
-                --with github.com/mholt/caddy-l4@master \
-                --with github.com/caddyserver/cache-handler \
-                --with github.com/caddyserver/replace-response \
-                --output ./caddy; then
-              break
-            fi
-            if [[ "$attempt" -eq 3 ]]; then exit 1; fi
-            sleep "$((attempt * 5))"
-          done
+          xcaddy build \
+              --with github.com/caddy-dns/cloudflare@master \
+              --with github.com/mholt/caddy-l4@master \
+              --with github.com/caddyserver/cache-handler \
+              --with github.com/caddyserver/replace-response \
+              --output ./caddy
       - name: Install
         run: |
           sudo apt-get update \
@@ -81,6 +74,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -95,11 +90,10 @@ jobs:
           build-args: CADDY_VERSION=${{ env.CADDY_VERSION }}
           build-contexts: local-bin=/results/
           context: "{{defaultContext}}:caddy"
-          push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-to: type=gha,mode=min,scope=${{ matrix.platform }}
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
         env:
@@ -133,6 +127,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0

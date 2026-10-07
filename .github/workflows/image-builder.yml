@@ -26,6 +26,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -39,14 +41,13 @@ jobs:
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./aws-lc.Dockerfile"
-          push: true
           platforms: ${{ matrix.platform }}
           build-args: |
             CFLAGS=  -O2 -Wall -Wformat -Wformat=2 -Wconversion -Wimplicit-fallthrough -Werror=format-security -Werror=implicit -Werror=incompatible-pointer-types -Werror=int-conversion -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_GLIBCXX_ASSERTIONS -fexceptions -fstrict-flex-arrays=3 -fstack-clash-protection -fstack-protector-strong -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero ${{ matrix.platform == 'linux/arm64' && '-mbranch-protection=standard -march=armv8.2-a+crypto' || '-fcf-protection=full -march=x86-64-v2' }} -Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -Wl,--no-copy-dt-needed-entries -Wl,--icf=safe
             CXXFLAGS=-O2 -Wall -Wformat -Wformat=2 -Wconversion -Wimplicit-fallthrough -Werror=format-security -Werror=implicit -Werror=incompatible-pointer-types -Werror=int-conversion -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_GLIBCXX_ASSERTIONS -fexceptions -fstrict-flex-arrays=3 -fstack-clash-protection -fstack-protector-strong -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero ${{ matrix.platform == 'linux/arm64' && '-mbranch-protection=standard -march=armv8.2-a+crypto' || '-fcf-protection=full -march=x86-64-v2' }} -Wl,-z,nodlopen -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -Wl,--no-copy-dt-needed-entries -Wl,--icf=safe
           cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-to: type=gha,mode=min,scope=${{ matrix.platform }}
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
         env:
@@ -80,6 +81,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -115,6 +118,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -128,11 +133,10 @@ jobs:
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./modern-toolbox-fedora.Dockerfile"
-          push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-to: type=gha,mode=min,scope=${{ matrix.platform }}
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
         env:
@@ -166,6 +170,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -207,6 +213,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -220,11 +228,10 @@ jobs:
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./alpine.Dockerfile"
-          push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-to: type=gha,mode=min,scope=${{ matrix.platform }}
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
         env:
@@ -258,6 +265,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -299,6 +308,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -312,11 +323,10 @@ jobs:
         with:
           context: "{{defaultContext}}:image-builder"
           file: "./endlessh.Dockerfile"
-          push: true
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
-          outputs: type=image,compression=estargz,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-to: type=gha,mode=min,scope=${{ matrix.platform }}
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
       -
         name: Export digest
         env:
@@ -350,6 +360,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
