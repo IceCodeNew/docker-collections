@@ -27,6 +27,8 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          cleanup: false
       -
         name: Login to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -34,33 +36,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and load the current arch image to local daemon
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: "{{defaultContext}}:bash-toybox"
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:${{ env.TOYBOX_VERSION }}
-      -
-        name: Smoke Test
-        env:
-          TOYBOX_IMAGE: ${{ env.TOYBOX_IMAGE }}
-          TOYBOX_VERSION: ${{ env.TOYBOX_VERSION }}
-        run: |
-          docker save -o "bash-toybox.tar" "${TOYBOX_IMAGE}:${TOYBOX_VERSION}"
-      -
         name: Build and push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: "{{defaultContext}}:bash-toybox"
-          push: true
+          outputs: type=image,compression=zstd,force-compression=true,oci-mediatypes=true,push=true
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/bash-toybox:${{ env.TOYBOX_VERSION }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       -
         name: Inspect image
@@ -74,5 +60,5 @@ jobs:
         name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          input: "bash-toybox.tar"
+          image-ref: ${{ env.TOYBOX_IMAGE }}:${{ env.TOYBOX_VERSION }}
           format: 'table'
