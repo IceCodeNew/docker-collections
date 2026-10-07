@@ -33,7 +33,7 @@ jobs:
     permissions:
       actions: write
     concurrency:
-      group: stronghold-protocol-dev-tracking
+      group: stronghold-protocol-dev-publish
       cancel-in-progress: false
     runs-on: ubuntu-24.04
     steps:
