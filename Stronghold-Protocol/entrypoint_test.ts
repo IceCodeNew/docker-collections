@@ -436,6 +436,16 @@ for (
       error: /assets-report\.json/,
     },
     {
+      name: "an orphaned old asset",
+      report: { orphans: ["obsolete.svg"] },
+      error: /Unreferenced assets remain/,
+    },
+    {
+      name: "an asset that failed pruning",
+      report: { pruned: ["icon.svg"] },
+      error: /Unreferenced assets remain/,
+    },
+    {
       name: "a missing nested asset",
       report: {},
       file: "missing",
@@ -489,7 +499,7 @@ for (
         `${dir}/public/fonts/text.woff2`,
         scenario.file === "empty" ? "" : "fixture font",
       );
-      const result = await run(dir, [script("verify-assets")]);
+      const result = await run(dir, [fileURLToPath(new URL("./verify-assets.mjs", import.meta.url))]);
       assert.equal(result.code, scenario.error ? 1 : 0);
       const stderr = result.stderr;
       if (scenario.error) assert.match(stderr, scenario.error);
