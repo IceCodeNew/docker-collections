@@ -46,7 +46,6 @@ jobs:
         env:
           _TARGETARCH: ${{ matrix.platform }}
         run: |
-          set -euo pipefail
           go env -w CGO_ENABLED=0
           case "$_TARGETARCH" in \
               linux/amd64) \
@@ -59,18 +58,12 @@ jobs:
 
           export XCADDY_SETCAP=1
           export XCADDY_GO_BUILD_FLAGS="-trimpath -ldflags '-w -s'"
-          for attempt in 1 2 3; do
-            if xcaddy build \
-                --with github.com/caddy-dns/cloudflare@master \
-                --with github.com/mholt/caddy-l4@master \
-                --with github.com/caddyserver/cache-handler \
-                --with github.com/caddyserver/replace-response \
-                --output ./caddy; then
-              break
-            fi
-            if [[ "$attempt" -eq 3 ]]; then exit 1; fi
-            sleep "$((attempt * 5))"
-          done
+          xcaddy build \
+              --with github.com/caddy-dns/cloudflare@master \
+              --with github.com/mholt/caddy-l4@master \
+              --with github.com/caddyserver/cache-handler \
+              --with github.com/caddyserver/replace-response \
+              --output ./caddy
       - name: Install
         run: |
           sudo apt-get update \
