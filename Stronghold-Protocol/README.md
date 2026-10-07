@@ -25,37 +25,40 @@ docker buildx build --load \
   --tag stronghold-protocol ./Stronghold-Protocol
 ```
 
-Asset downloads are disabled by default. To enable them locally, pass both
-`--build-arg FETCH_ASSETS=1` and `--build-arg ASSET_SOURCE_REVISIONS_SHA256=<value>`.
-If you cannot resolve source revisions, generate a fresh value (for example,
-`openssl rand -hex 32`) for each local build to force a new download.
-The image workflow downloads assets once in an amd64 `asset_bundle` target, then
-passes the architecture-independent bundle to both platform builds. The two
-platform jobs start in parallel after that export completes.
-If the optional download or asset verification fails, the workflow exports the
-upstream fallback graphics instead and does not cache the failed download.
-Local builds with `FETCH_ASSETS=1` fail when the download report has errors or
-a manifest file is missing or empty.
-Some optional models have no public source and use upstream fallback graphics.
-Asset sources can change independently of the application release.
-The image workflow fingerprints the Git branches named in upstream
-`tools/assets/sources.mjs` before each build. It keeps the downloaded asset
-layer in a separate GHA cache and rebuilds it when any source branch advances.
-For a local asset build, pass the same fingerprint to Docker to avoid reusing
-assets after their source branches change:
+The workflow checks out Stronghold v0.2.0, downloads optional art and battle voices
+with Node.js 24, and verifies them. It caches assets separately for each of the
+six external source repositories. A cache key includes that repository's current
+Git branch revisions and the asset generator inputs. When one source advances,
+the workflow still restores the other five caches; the changed source downloads
+fresh files because existing files may have changed in place. The downloader
+skips valid unchanged files, adds new ones, and `--prune` removes files absent
+from the new manifest. Font files that the new manifest no longer references
+are removed before caching and uploading.
+The workflow uploads one combined asset bundle for both architecture builds.
+Failed downloads are not cached; the workflow builds with the upstream placeholder
+manifest instead.
+The Dockerfile itself never downloads art. Version 0.2.0 includes four language
+packs in the image; 39 summon models have no public art source and require local
+game client extraction.
+
+For a local image with art, prepare the bundle from a checkout of the release:
 
 ```sh
-fingerprint=$(python3 Stronghold-Protocol/asset_source_revisions.py \
-  /tmp/stronghold-source/tools/assets/sources.mjs)
+cd /tmp/stronghold-source
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+node tools/fetch-assets.mjs
+node /path/to/docker-collections/Stronghold-Protocol/verify-assets.mjs
+mkdir -p /tmp/stronghold-assets/public /tmp/stronghold-assets/data
+cp -a public/assets public/fonts /tmp/stronghold-assets/public/
+cp data/assets.json /tmp/stronghold-assets/data/
+cd /path/to/docker-collections
 docker buildx build --load \
   --build-context src_dir=/tmp/stronghold-source \
-  --build-arg FETCH_ASSETS=1 \
-  --build-arg ASSET_SOURCE_REVISIONS_SHA256="$fingerprint" \
+  --build-context asset_bundle=/tmp/stronghold-assets \
   --tag stronghold-protocol ./Stronghold-Protocol
 ```
 
-A local build without downloads or an asset bundle uses placeholder graphics
-unless you mount assets and their matching manifest.
+Without an asset bundle, a local build uses the upstream placeholder manifest.
 
 ## Run with a temporary tunnel
 
@@ -121,7 +124,8 @@ TEST_RUNTIME_ARGS='["run","--allow-read","--allow-net","--allow-env","--allow-ru
   deno test -A Stronghold-Protocol/entrypoint_test.ts
 ```
 
-The image workflow builds native AMD64 and ARM64 images and checks `/healthz` before publication.
+The image workflow builds native AMD64 and ARM64 images, checks `/healthz`,
+and verifies the four built-in 0.2.0 language packs before publication.
 Its smoke test starts the game without a public tunnel.
 
 ## Licenses

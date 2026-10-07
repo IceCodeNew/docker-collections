@@ -2,6 +2,10 @@
 
 FROM mirror.gcr.io/icecodexi/bash-toybox:latest@sha256:e9328168e7241e8d362094b9246d1843f901ff0106b6b7c8df42c54c7f2c9573 AS catatonit
 FROM mirror.gcr.io/cloudflare/cloudflared:2026.10.0@sha256:9b49eed8f62806d5d45ddf59ecefb5710429598ea6d3fcccd2af938f621b2b07 AS cloudflared
+# Local builds without an asset context use the upstream placeholder manifest.
+FROM scratch AS asset_bundle
+COPY --link --parents --from=src_dir ./data/assets.json /
+
 FROM dhi.io/deno:2.9.7-debian13-dev@sha256:28cf8d28554caa147f21d278cb3e49921b5f23cd05cce2c5a24f56becb1bd981 AS deps
 WORKDIR /app
 
@@ -18,48 +22,22 @@ ARG TEST_RUNTIME_ARGS
 RUN --mount=type=bind,target=/tests \
     deno test -A entrypoint_test.ts && touch /tmp/stronghold-tests-passed
 
-FROM deps AS assets
+FROM deps AS app
 COPY --link --parents --from=src_dir \
-    ./package.json ./shared ./server ./tools ./data ./public \
+    ./package.json ./shared ./server ./data ./public \
     ./docs/research ./LICENSE ./NOTICE.md ./THIRD-PARTY-NOTICES.md /app/
-RUN DENO_DIR=/tmp/vendor-cache deno run --allow-read --allow-write tools/vendor.mjs \
+RUN --mount=type=bind,from=src_dir,source=./tools/vendor.mjs,target=/app/tools/vendor.mjs \
+    DENO_DIR=/tmp/vendor-cache deno run --allow-read --allow-write tools/vendor.mjs \
     && rm -rf /tmp/vendor-cache \
-    && deno cache server/index.js
-ARG FETCH_ASSETS=0
-ARG ASSET_SOURCE_REVISIONS_SHA256
-RUN --mount=type=bind,source=./verify-assets.ts,target=/verify-assets.ts \
-    export DENO_DIR=/tmp/assets-cache \
-    && case "$FETCH_ASSETS" in \
-        1) if [ -z "$ASSET_SOURCE_REVISIONS_SHA256" ]; then \
-               echo 'ASSET_SOURCE_REVISIONS_SHA256 is required when fetching assets.' >&2; \
-               exit 1; \
-           fi; \
-           for attempt in 1 2 3; do \
-               if deno run --allow-read --allow-write --allow-net --allow-env=DEBUG,SP_ASSET_SOURCE,SP_GITHUB_PROXY tools/fetch-assets.mjs; then \
-                   break; \
-               fi; \
-               if [ "$attempt" -eq 3 ]; then exit 1; fi; \
-               sleep "$((attempt * 5))"; \
-           done \
-           && deno run --allow-read /verify-assets.ts ;; \
-        0) ;; \
-        *) echo 'FETCH_ASSETS must be 0 or 1.' >&2; exit 1 ;; \
-    esac \
-    && rm -rf .cache tools /tmp/assets-cache \
-    && mkdir -p public/assets public/fonts \
+    && deno cache server/index.js \
     && chown -R 1993:1993 /deno-dir
-
-# Files are architecture-independent; export them once from the amd64 asset build.
-FROM scratch AS asset_bundle
-COPY --link --parents --from=assets \
-    /app/./public/assets /app/./public/fonts /app/./data/assets.json /
 
 FROM dhi.io/deno:2.9.7-debian13@sha256:862b393c397b773076121d0a87263bfe9eafa2e79a8609982e0e2749b1c332be AS runtime
 WORKDIR /app
 COPY --link --from=catatonit /usr/bin/catatonit /usr/bin/catatonit
 COPY --link --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
 # Include parent entries to preserve cache ownership with --link.
-COPY --link --parents --chmod=u=rwX,go=rX --from=assets /./app /./deno-dir /
+COPY --link --parents --chmod=u=rwX,go=rX --from=app /./app /./deno-dir /
 COPY --link --chmod=u=rwX,go=rX --from=asset_bundle / /app/
 COPY --link --chmod=u=rwX,go=rX ./entrypoint.ts ./healthcheck.ts /usr/local/lib/stronghold-protocol/
 
