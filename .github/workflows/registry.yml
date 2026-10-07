@@ -40,18 +40,12 @@ jobs:
             [tools]
             apko = "latest"
 
-      - name: Install regctl
-        uses: regclient/actions/regctl-installer@b7d935a4b4f550aa3b5ad20941f7d2f9285565b2 # main
-        with:
-          release: v0.11.5
-
       - name: Build registry-base
         shell: bash
         env:
           REGISTRY_IMAGE: ${{ env.REGISTRY_IMAGE }}
         run: |
           apko publish ./registry/base.yaml "${REGISTRY_IMAGE}:base"
-          regctl image mod "${REGISTRY_IMAGE}:base" --layer-compress zstd --to-oci --replace
 
   registry:
     runs-on: ubuntu-24.04

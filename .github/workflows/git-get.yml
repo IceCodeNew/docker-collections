@@ -38,18 +38,12 @@ jobs:
             [tools]
             apko = "latest"
 
-      - name: Install regctl
-        uses: regclient/actions/regctl-installer@b7d935a4b4f550aa3b5ad20941f7d2f9285565b2 # main
-        with:
-          release: v0.11.5
-
       - name: Build git-get-base
         shell: bash
         env:
           REGISTRY_GIT_GET: ${{ env.git-get_IMAGE }}
         run: |
           apko publish ./git-get/base.yaml "${REGISTRY_GIT_GET}:base"
-          regctl image mod "${REGISTRY_GIT_GET}:base" --layer-compress zstd --to-oci --replace
 
   git-get:
     runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
