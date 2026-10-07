@@ -19,7 +19,7 @@ RUN apk update; apk --no-progress --no-cache add \
         bash ca-certificates catatonit; \
     apk --no-progress --no-cache upgrade; \
     rm -rf /var/cache/apk/*
-COPY --link --from=assets --chown=1000:1000 \
+COPY --link --from=assets --chown=1000 \
     /home/bun/app/ /home/bun/app/
 
 EXPOSE 4141

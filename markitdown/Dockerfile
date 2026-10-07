@@ -29,7 +29,7 @@ ARG ver_markitdown
 LABEL org.opencontainers.image.version="${ver_markitdown}" \
       org.opencontainers.image.source="https://github.com/IceCodeNew/docker-collections"
 
-COPY --link --from=build --chown=65532:65532 \
+COPY --link --from=build --chown=65532 \
     /home/nonroot/.local/ /home/nonroot/.local/
 
 ENV TZ=Asia/Taipei
