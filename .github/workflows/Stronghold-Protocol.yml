@@ -347,6 +347,17 @@ jobs:
               echo "Skipping stale dev build for $source_sha; review branch is $current_sha."
               exit 0
             fi
+            git ls-remote --tags https://github.com/sganggs/Stronghold-Protocol.git \
+              > /tmp/stronghold-upstream-tags.txt
+            if awk -v sha="$source_sha" '$1 == sha {
+              tag = $2
+              sub(/^refs\/tags\//, "", tag)
+              sub(/\^\{\}$/, "", tag)
+              if (tag ~ /^v[0-9]+\.[0-9]+\.[0-9]+$/) found = 1
+            } END {exit !found}' /tmp/stronghold-upstream-tags.txt; then
+              echo "Skipping dev build for $source_sha; an upstream release tag now matches it."
+              exit 0
+            fi
           fi
           images=()
           for digest in *; do
