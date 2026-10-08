@@ -426,6 +426,36 @@ for (
   const scenario of [
     { name: "valid nested assets and fonts", report: {}, error: undefined },
     {
+      name: "complete image art when required",
+      report: {},
+      image: true,
+      required: "1",
+      error: undefined,
+    },
+    {
+      name: "partial download in a complete image",
+      report: { totals: { error: 1 } },
+      image: true,
+      required: "1",
+      error: undefined,
+    },
+    {
+      name: "missing image art when required",
+      report: {},
+      image: true,
+      required: "1",
+      file: "missing",
+      error: /ENOENT|No such file/,
+    },
+    {
+      name: "optional image art when disabled",
+      report: {},
+      image: true,
+      required: "0",
+      file: "missing",
+      error: undefined,
+    },
+    {
       name: "font errors",
       report: { fontErrors: ["font"] },
       error: /assets-report\.json/,
@@ -499,7 +529,14 @@ for (
         `${dir}/public/fonts/text.woff2`,
         scenario.file === "empty" ? "" : "fixture font",
       );
-      const result = await run(dir, [fileURLToPath(new URL("./verify-assets.mjs", import.meta.url))]);
+      const result = await run(
+        dir,
+        [
+          fileURLToPath(new URL("./verify-assets.mjs", import.meta.url)),
+          ...(scenario.image ? ["--image"] : []),
+        ],
+        scenario.image ? { FETCH_ASSETS: scenario.required ?? "0" } : {},
+      );
       assert.equal(result.code, scenario.error ? 1 : 0);
       const stderr = result.stderr;
       if (scenario.error) assert.match(stderr, scenario.error);

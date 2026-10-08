@@ -49,6 +49,9 @@ ENTRYPOINT ["/usr/bin/catatonit", "--", "/usr/local/bin/deno", "run", "--allow-r
 CMD ["/usr/local/bin/deno", "run", "--allow-net", "--allow-read", "--allow-env", "--allow-sys=networkInterfaces", "server/index.js"]
 
 FROM runtime AS tested
+ARG FETCH_ASSETS=0
+RUN --mount=type=bind,source=./verify-assets.mjs,target=/verify-assets.mjs \
+    ["/usr/local/bin/deno", "run", "--allow-read", "--allow-env=FETCH_ASSETS", "/verify-assets.mjs", "--image"]
 COPY --link --from=tests /tmp/stronghold-tests-passed /tmp/stronghold-tests-passed
 
 FROM runtime AS final

@@ -34,6 +34,8 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
        !startsWith(github.head_ref, 'renovate/'))
     runs-on: ubuntu-24.04
+    outputs:
+      fetched: ${{ steps.fetch_assets.outcome == 'success' && '1' || '0' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -122,9 +124,13 @@ jobs:
           npm ci --omit=dev --ignore-scripts --no-audit --no-fund
           for attempt in 1 2 3; do
             if node tools/fetch-assets.mjs --prune && \
-               python3 ../collection/Stronghold-Protocol/asset_cache.py prune-fonts . && \
-               node ../collection/Stronghold-Protocol/verify-assets.mjs; then
-              exit 0
+               python3 ../collection/Stronghold-Protocol/asset_cache.py prune-fonts .; then
+              if node ../collection/Stronghold-Protocol/verify-assets.mjs; then exit 0; fi
+              if [[ "$attempt" -eq 3 ]] && \
+                 node ../collection/Stronghold-Protocol/verify-assets.mjs --allow-download-errors; then
+                echo '::warning::Some optional art downloads failed; publishing the verified available assets.'
+                exit 0
+              fi
             fi
             if [[ "$attempt" -eq 3 ]]; then exit 1; fi
             sleep "$((attempt * 5))"
@@ -252,6 +258,7 @@ jobs:
           target: tested
           build-args: |
             "TEST_RUNTIME_ARGS=[""run"",""--allow-read"",""--allow-net"",""--allow-env"",""--allow-run""]"
+            FETCH_ASSETS=${{ needs.asset_bundle.outputs.fetched }}
           platforms: ${{ matrix.platform }}
           load: true
           tags: stronghold-protocol:test
@@ -279,6 +286,17 @@ jobs:
                  for (const id of ["en", "ja", "ko", "zh-TW"]) {
                    if (!ids.has(id)) throw new Error(`Missing language pack: ${id}`);
                  }'
+              asset_file=$(find asset-bundle/public/assets -type f -print -quit)
+              if [[ -n "$asset_file" ]]; then
+                asset_path=${asset_file#asset-bundle/public}
+                docker exec stronghold-protocol-smoke /usr/local/bin/deno eval --allow-net \
+                  'const path = Deno.args[0];
+                   const response = await fetch(`http://127.0.0.1:3000${path}`);
+                   if (!response.ok) throw new Error(`Asset ${path}: HTTP ${response.status}`);' \
+                  "$asset_path"
+              else
+                echo '::warning::Asset bundle has no optional art to test.'
+              fi
               exit 0
             fi
             sleep 2
