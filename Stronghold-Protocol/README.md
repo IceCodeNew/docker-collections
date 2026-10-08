@@ -25,7 +25,7 @@ docker buildx build --load \
   --tag stronghold-protocol ./Stronghold-Protocol
 ```
 
-The workflow checks out Stronghold v0.2.0, downloads optional art and battle voices
+The workflow checks out the configured Stronghold release, downloads optional art and battle voices
 with Node.js 24, and verifies them. It caches assets separately for each of the
 six external source repositories. A cache key includes that repository's current
 Git branch revisions and the asset generator inputs. When one source advances,
@@ -35,9 +35,10 @@ skips valid unchanged files, adds new ones, and `--prune` removes files absent
 from the new manifest. Font files that the new manifest no longer references
 are removed before caching and uploading.
 The workflow uploads one combined asset bundle for both architecture builds.
-Failed downloads are not cached; the workflow builds with the upstream placeholder
-manifest instead.
-The Dockerfile itself never downloads art. Version 0.2.0 includes four language
+After three attempts, individual failed downloads are omitted from the manifest;
+verified available art is still bundled and cached. If asset verification fails,
+the workflow builds with the upstream placeholder manifest instead.
+The Dockerfile itself never downloads art. Version 0.2.1 includes four language
 packs in the image; 39 summon models have no public art source and require local
 game client extraction.
 
@@ -59,6 +60,9 @@ docker buildx build --load \
 ```
 
 Without an asset bundle, a local build uses the upstream placeholder manifest.
+For the `tested` target, `--build-arg FETCH_ASSETS=1` checks that every image
+and font referenced by the bundled manifest exists as a nonempty file in the
+final image. The workflow enables this check when the asset job succeeds.
 
 ## Run with a temporary tunnel
 
