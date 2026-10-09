@@ -95,6 +95,7 @@ jobs:
           cache-dependency-path: upstream/package-lock.json
       - name: Restore yuanyan assets
         id: yuanyan_cache
+        if: steps.asset_sources.outputs.ready == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/yuanyan
@@ -102,6 +103,7 @@ jobs:
           restore-keys: stronghold-assets-yuanyan-
       - name: Restore fexli assets
         id: fexli_cache
+        if: steps.asset_sources.outputs.ready == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/fexli
@@ -109,6 +111,7 @@ jobs:
           restore-keys: stronghold-assets-fexli-
       - name: Restore models assets
         id: models_cache
+        if: steps.asset_sources.outputs.ready == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/models
@@ -116,6 +119,7 @@ jobs:
           restore-keys: stronghold-assets-models-
       - name: Restore arkassets assets
         id: arkassets_cache
+        if: steps.asset_sources.outputs.ready == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/arkassets
@@ -123,15 +127,18 @@ jobs:
           restore-keys: stronghold-assets-arkassets-
       - name: Restore gamedata and fonts
         id: gamedata_cache
+        if: steps.asset_sources.outputs.ready == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/gamedata
           key: stronghold-assets-gamedata-${{ steps.asset_sources.outputs.gamedata }}-${{ steps.asset_inputs.outputs.hash }}
           restore-keys: stronghold-assets-gamedata-
       - name: Assemble cached assets
+        if: steps.asset_sources.outputs.ready == 'true'
         run: python3 collection/Stronghold-Protocol/asset_cache.py restore upstream source-cache
       - name: Fetch optional assets
         id: fetch_assets
+        if: steps.asset_sources.outputs.ready == 'true'
         continue-on-error: true
         working-directory: upstream
         shell: bash

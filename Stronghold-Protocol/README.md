@@ -43,9 +43,10 @@ absent from the new manifest; unreferenced font files are removed before caching
 and uploading. Source API failures do not bypass verification. Cache restore and
 save logs count assets, fonts, and indexes separately.
 The workflow uploads one combined asset bundle for both architecture builds.
-Missing optional files may be omitted from the manifest. If downloads or verification
-still fail after three attempts,
-the workflow builds with the upstream placeholder manifest instead.
+Missing optional files may be omitted from the manifest. If source resolution,
+downloads, or verification still fail after three attempts, the workflow builds
+with the upstream placeholder manifest instead. An unconfigured source repository
+remains a configuration error and stops the job.
 The workflow also uploads `upstream/.cache/assets-report.json`, when present, as
 the separate `stronghold-protocol-asset-download-report` artifact in the workflow
 run's artifacts list. This report remains available after a failed asset fetch;
