@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 SOURCES = {
     "yuanyan": "yuanyan3060/ArknightsGameResource",
@@ -19,6 +20,15 @@ SOURCES = {
 }
 RAW_URL = re.compile(r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/")
 CDN_URL = re.compile(r"https://cdn\.jsdelivr\.net/gh/([^/]+)/([^/@]+)@([^/]+)/")
+GROUPS = {name: [name] for name in SOURCES if name != "fonts"}
+GROUPS["gamedata"].append("fonts")
+
+
+def github_json(endpoint):
+    result = subprocess.run(
+        ["gh", "api", endpoint], check=True, capture_output=True, text=True, timeout=60,
+    )
+    return json.loads(result.stdout)
 
 
 def source_for(url):
@@ -33,36 +43,20 @@ def revisions(source_file):
     refs = sorted(set(RAW_URL.findall(source_file.read_text())))
     if not refs:
         raise ValueError(f"No asset source refs found in {source_file}")
-    by_repo = {repo: [] for repo in SOURCES.values()}
-    unknown = []
+    snapshot = {}
     for owner, repo, branch in refs:
         full_repo = f"{owner}/{repo}"
-        if full_repo not in by_repo:
-            unknown.append(full_repo)
-            continue
-        by_repo[full_repo].append(branch)
-    if unknown:
-        print(f"::warning::New source repositories need cache shards: {', '.join(unknown)}", file=sys.stderr)
-        for name in SOURCES:
-            print(f"{name}={os.urandom(32).hex()}")
-        return
-    for name, repo in SOURCES.items():
-        resolved = []
-        try:
-            for branch in by_repo[repo]:
-                ref = f"refs/heads/{branch}"
-                result = subprocess.run(
-                    ["git", "ls-remote", f"https://github.com/{repo}.git", ref],
-                    check=True, capture_output=True, text=True, timeout=30,
-                )
-                fields = result.stdout.strip().split()
-                if len(fields) != 2 or fields[1] != ref or not re.fullmatch(r"[0-9a-f]{40}", fields[0]):
-                    raise ValueError(f"Cannot resolve {repo}@{branch}")
-                resolved.append(f"{branch}={fields[0]}")
-        except (OSError, subprocess.SubprocessError, ValueError) as error:
-            print(f"::warning::Could not resolve {repo}: {error}; invalidating its cache", file=sys.stderr)
-            resolved.append(os.urandom(32).hex())
-        fingerprint = hashlib.sha256(("\n".join(resolved) + "\n").encode()).hexdigest()
+        if full_repo not in SOURCES.values():
+            raise ValueError(f"New source repository needs a cache group: {full_repo}")
+        data = github_json(f"repos/{full_repo}/commits/{quote(branch, safe='')}")
+        snapshot[f"{full_repo}@{branch}"] = {"commit": data["sha"], "tree": data["commit"]["tree"]["sha"]}
+    target = source_file.parents[2] / ".cache/asset-sources.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(snapshot))
+    for name, members in GROUPS.items():
+        trees = {ref: entry["tree"] for ref, entry in snapshot.items()
+                 if ref.split("@")[0] in [SOURCES[member] for member in members]}
+        fingerprint = hashlib.sha256(json.dumps(trees, sort_keys=True).encode()).hexdigest()
         print(f"{name}={fingerprint}")
 
 
@@ -95,10 +89,14 @@ def copy_files(source, target):
 
 def restore(upstream, caches):
     merged = {}
-    for name in SOURCES:
+    for name in GROUPS:
         shard = caches / name
+        if not shard.exists():
+            continue
+        # Restored bytes are only candidates. The upstream snapshot verifier owns
+        # current URL selection, raw-content checks, and transformed outputs.
         copy_files(shard / "assets", upstream / "public/assets")
-        if name == "fonts":
+        if name == "gamedata":
             copy_files(shard / "fonts", upstream / "public/fonts")
             if (shard / "fonts-ledger.json").exists():
                 target = upstream / ".cache/fonts-ledger.json"
@@ -111,8 +109,13 @@ def restore(upstream, caches):
             raise ValueError(f"Asset cache ledger collision in {name}")
         merged.update(entries)
         if shard.exists():
-            print(f"Restored {name}: {len(entries)} assets")
+            print(f"Restored {name}: {cache_counts(shard)}")
     write_ledger(upstream / ".cache/assets-ledger.json", merged)
+
+
+def cache_counts(shard):
+    return ", ".join(f"{sum(p.is_file() for p in (shard / folder).rglob('*'))} {folder}"
+                     for folder in ("assets", "fonts", "indexes"))
 
 
 def referenced_fonts(value):
@@ -138,7 +141,7 @@ def prune_fonts(upstream):
 
 def save(upstream, caches):
     ledger = read_ledger(upstream / ".cache/assets-ledger.json")
-    grouped = {name: {} for name in SOURCES}
+    grouped = {name: {} for name in GROUPS}
     for file in (upstream / "public/assets").rglob("*"):
         if not file.is_file():
             continue
@@ -146,8 +149,10 @@ def save(upstream, caches):
         name = source_for(ledger.get(rel, {}).get("url", ""))
         if name is None:
             raise ValueError(f"No known source for {rel}; refusing to cache it")
+        if name == "fonts":
+            name = "gamedata"
         grouped[name][rel] = ledger[rel]
-    for name in SOURCES:
+    for name in GROUPS:
         shard = caches / name
         shutil.rmtree(shard, ignore_errors=True)
         shard.mkdir(parents=True)
@@ -160,13 +165,13 @@ def save(upstream, caches):
             except OSError:
                 shutil.copy2(file, dest)
         write_ledger(shard / "assets-ledger.json", grouped[name])
-        if name == "fonts":
+        if name == "gamedata":
             copy_files(upstream / "public/fonts", shard / "fonts")
             shutil.copy2(upstream / ".cache/fonts-ledger.json", shard / "fonts-ledger.json")
         if name in ("models", "gamedata"):
             folder = "ark-models" if name == "models" else "gamedata"
             copy_files(upstream / ".cache" / folder, shard / "indexes")
-        print(f"Prepared {name}: {len(grouped[name])} assets")
+        print(f"Prepared {name}: {cache_counts(shard)}")
 
 
 if __name__ == "__main__":
