@@ -23,7 +23,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
-  STRONGHOLD_PROTOCOL_VERSION: v0.2.1
+  STRONGHOLD_PROTOCOL_VERSION: v0.2.2
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
