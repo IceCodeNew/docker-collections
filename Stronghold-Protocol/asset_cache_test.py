@@ -73,6 +73,31 @@ class CacheTest(unittest.TestCase):
         snapshot = json.loads((source.parents[2] / ".cache/asset-sources.json").read_text())
         self.assertEqual(snapshot[f"{cache.SOURCES['fonts']}@main"], {"commit": "third", "tree": "different"})
 
+    def test_source_outage_retries_then_selects_placeholder_without_stale_snapshot(self):
+        source = self.root / "source/tools/assets/sources.mjs"
+        target = source.parents[2] / ".cache/asset-sources.json"
+        self.write(source, f"https://raw.githubusercontent.com/{cache.SOURCES['yuanyan']}/main/".encode())
+        good = {"sha": "new", "commit": {"tree": {"sha": "new-tree"}}}
+        for failures, ready in (([OSError("timeout"), OSError("rate limit"), good], "true"),
+                                (OSError("unavailable"), "false")):
+            self.write(target, {"stale": True})
+            output = io.StringIO()
+            with patch.object(cache, "github_json", side_effect=failures), patch("time.sleep"), \
+                    contextlib.redirect_stdout(output), contextlib.redirect_stderr(io.StringIO()):
+                cache.revisions(source)
+            values = dict(line.split("=") for line in output.getvalue().splitlines())
+            self.assertEqual(values["ready"], ready)
+            if ready == "false":
+                self.assertEqual(values, {"ready": "false"})
+                self.assertFalse(target.exists())
+            else:
+                self.assertEqual(json.loads(target.read_text())[f"{cache.SOURCES['yuanyan']}@main"],
+                                 {"commit": "new", "tree": "new-tree"})
+        self.write(source, b"https://raw.githubusercontent.com/unknown/repo/main/")
+        with patch.object(cache, "github_json", side_effect=OSError("unavailable")):
+            with self.assertRaisesRegex(ValueError, "New source repository"):
+                cache.revisions(source)
+
 
 if __name__ == "__main__":
     unittest.main()

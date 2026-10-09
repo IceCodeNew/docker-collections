@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from urllib.parse import quote
 
@@ -43,14 +44,26 @@ def revisions(source_file):
     refs = sorted(set(RAW_URL.findall(source_file.read_text())))
     if not refs:
         raise ValueError(f"No asset source refs found in {source_file}")
-    snapshot = {}
     for owner, repo, branch in refs:
         full_repo = f"{owner}/{repo}"
         if full_repo not in SOURCES.values():
             raise ValueError(f"New source repository needs a cache group: {full_repo}")
-        data = github_json(f"repos/{full_repo}/commits/{quote(branch, safe='')}")
-        snapshot[f"{full_repo}@{branch}"] = {"commit": data["sha"], "tree": data["commit"]["tree"]["sha"]}
     target = source_file.parents[2] / ".cache/asset-sources.json"
+    for attempt in range(1, 4):
+        snapshot = {}
+        try:
+            for owner, repo, branch in refs:
+                full_repo = f"{owner}/{repo}"
+                data = github_json(f"repos/{full_repo}/commits/{quote(branch, safe='')}")
+                snapshot[f"{full_repo}@{branch}"] = {"commit": data["sha"], "tree": data["commit"]["tree"]["sha"]}
+            break
+        except (OSError, subprocess.SubprocessError, ValueError, KeyError) as error:
+            if attempt == 3:
+                target.unlink(missing_ok=True)
+                print(f"::warning::Asset source resolution failed: {error}; using placeholder assets", file=sys.stderr)
+                print("ready=false")
+                return
+            time.sleep(attempt * 5)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(snapshot))
     for name, members in GROUPS.items():
@@ -58,6 +71,7 @@ def revisions(source_file):
                  if ref.split("@")[0] in [SOURCES[member] for member in members]}
         fingerprint = hashlib.sha256(json.dumps(trees, sort_keys=True).encode()).hexdigest()
         print(f"{name}={fingerprint}")
+    print("ready=true")
 
 
 def read_ledger(path):
