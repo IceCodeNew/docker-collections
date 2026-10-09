@@ -4,7 +4,7 @@ FROM mirror.gcr.io/icecodexi/gg-saveweb:base@sha256:926fc4daa9454f899b4ce9226728
 FROM mirror.gcr.io/icecodexi/saveweb:acfunction@sha256:6e38fa7cbfc2a28f0c533a09ba43776cfff27a5a8e5d334b501f46a9cc3db0ab        AS acfun
 FROM mirror.gcr.io/icecodexi/saveweb:aixifan_videoinfo@sha256:5a0a45b86f54a42389df2691f6ff3c1feba470405a5dbab457f0038c82def182 AS aixifan
 FROM mirror.gcr.io/icecodexi/saveweb:lowapk-v3@sha256:940117edbd615069d36f9867f4b239bb9f621edc96208d7aed40e0de0f409f9b         AS lowapk
-FROM cgr.dev/chainguard/python:latest@sha256:b6248c85ba9b97e1e61b30197f309cc4d21661f889fefa5268f0a7bc530dad46
+FROM cgr.dev/chainguard/python:latest@sha256:95b155651d82460ced732db7ddd81f0888267d8cc9fc97d9f0e993deac398d07
 COPY --link --from=assets /              /
 COPY --link --chmod=755  ./entrypoint.sh /home/nonroot/
 SHELL ["/usr/bin/bash", "-o", "pipefail", "-c"]
