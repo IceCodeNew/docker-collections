@@ -135,6 +135,15 @@ jobs:
             if [[ "$attempt" -eq 3 ]]; then exit 1; fi
             sleep "$((attempt * 5))"
           done
+      - name: Upload asset download report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: stronghold-protocol-asset-download-report
+          path: upstream/.cache/assets-report.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
       - name: Prepare per-source caches
         id: prepare_source_caches
         if: steps.fetch_assets.outcome == 'success'

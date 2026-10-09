@@ -38,6 +38,11 @@ The workflow uploads one combined asset bundle for both architecture builds.
 After three attempts, individual failed downloads are omitted from the manifest;
 verified available art is still bundled and cached. If asset verification fails,
 the workflow builds with the upstream placeholder manifest instead.
+The workflow also uploads `upstream/.cache/assets-report.json`, when present, as
+the separate `stronghold-protocol-asset-download-report` artifact in the workflow
+run's artifacts list. This report remains available after a failed asset fetch;
+cancelled runs skip the upload. See the `Upload asset download report` step in
+the image workflow for its retention period. A missing report produces a warning.
 The Dockerfile itself never downloads art. Version 0.2.1 includes four language
 packs in the image; 39 summon models have no public art source and require local
 game client extraction.
