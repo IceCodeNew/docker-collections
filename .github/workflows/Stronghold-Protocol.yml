@@ -24,10 +24,16 @@ on:
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
   STRONGHOLD_PROTOCOL_VERSION: v0.2.3
+  # Asset tooling only; remove this override when the release includes snapshot verification.
+  STRONGHOLD_ASSET_TOOLS_SHA: 309f3a3c025e1d9c135d9b13d436d29f8366b138
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
   asset_bundle:
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
     # Image jobs need DHI credentials unavailable to forks; Renovate uses push validation.
     if: >-
       github.event_name != 'pull_request' ||
@@ -41,6 +47,8 @@ jobs:
         with:
           path: collection
           persist-credentials: false
+      - name: Test asset cache
+        run: python3 -m unittest discover -s collection/Stronghold-Protocol -p 'asset_cache_test.py'
       - name: Validate dev source SHA
         if: inputs.source_sha != ''
         env:
@@ -53,6 +61,21 @@ jobs:
           persist-credentials: false
           repository: ${{ inputs.source_sha != '' && 'IceCodeNew/Stronghold-Protocol' || 'sganggs/Stronghold-Protocol' }}
           ref: ${{ inputs.source_sha || env.STRONGHOLD_PROTOCOL_VERSION }}
+      - name: Check out snapshot-verifying asset tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: IceCodeNew/Stronghold-Protocol
+          ref: ${{ env.STRONGHOLD_ASSET_TOOLS_SHA }}
+          path: asset-tools
+          persist-credentials: false
+          sparse-checkout: |
+            tools/assets
+            tools/fetch-assets.mjs
+          sparse-checkout-cone-mode: false
+      - name: Install asset tools without changing the game release
+        run: |
+          cp asset-tools/tools/fetch-assets.mjs upstream/tools/fetch-assets.mjs
+          cp -a asset-tools/tools/assets/. upstream/tools/assets/
       - name: Resolve asset source revisions
         id: asset_sources
         shell: bash
@@ -62,7 +85,7 @@ jobs:
       - name: Resolve asset generator inputs
         id: asset_inputs
         run: |
-          echo 'hash=${{ hashFiles('upstream/package-lock.json', 'upstream/tools/fetch-assets.mjs', 'upstream/tools/assets/**', 'upstream/shared/constants.js', 'upstream/data/assets.json', 'upstream/data/backups.json', 'upstream/data/bosses.json', 'upstream/data/chess.json', 'upstream/data/enemies.json', 'upstream/data/tokens.json', 'upstream/docs/research/03-operators.json', 'upstream/docs/research/05-enemies.json', 'upstream/docs/research/05-maps.json', 'upstream/docs/research/07-assets.json') }}' >> "$GITHUB_OUTPUT"
+          echo 'hash=${{ hashFiles('collection/Stronghold-Protocol/asset_cache.py', 'upstream/package-lock.json', 'upstream/tools/fetch-assets.mjs', 'upstream/tools/assets/**', 'upstream/shared/constants.js', 'upstream/data/assets.json', 'upstream/data/backups.json', 'upstream/data/bosses.json', 'upstream/data/chess.json', 'upstream/data/enemies.json', 'upstream/data/tokens.json', 'upstream/docs/research/03-operators.json', 'upstream/docs/research/05-enemies.json', 'upstream/docs/research/05-maps.json', 'upstream/docs/research/07-assets.json') }}' >> "$GITHUB_OUTPUT"
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -76,42 +99,35 @@ jobs:
         with:
           path: source-cache/yuanyan
           key: stronghold-assets-yuanyan-${{ steps.asset_sources.outputs.yuanyan }}-${{ steps.asset_inputs.outputs.hash }}
-          restore-keys: stronghold-assets-yuanyan-${{ steps.asset_sources.outputs.yuanyan }}-
+          restore-keys: stronghold-assets-yuanyan-
       - name: Restore fexli assets
         id: fexli_cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/fexli
           key: stronghold-assets-fexli-${{ steps.asset_sources.outputs.fexli }}-${{ steps.asset_inputs.outputs.hash }}
-          restore-keys: stronghold-assets-fexli-${{ steps.asset_sources.outputs.fexli }}-
+          restore-keys: stronghold-assets-fexli-
       - name: Restore models assets
         id: models_cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/models
           key: stronghold-assets-models-${{ steps.asset_sources.outputs.models }}-${{ steps.asset_inputs.outputs.hash }}
-          restore-keys: stronghold-assets-models-${{ steps.asset_sources.outputs.models }}-
+          restore-keys: stronghold-assets-models-
       - name: Restore arkassets assets
         id: arkassets_cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/arkassets
           key: stronghold-assets-arkassets-${{ steps.asset_sources.outputs.arkassets }}-${{ steps.asset_inputs.outputs.hash }}
-          restore-keys: stronghold-assets-arkassets-${{ steps.asset_sources.outputs.arkassets }}-
-      - name: Restore fonts assets
-        id: fonts_cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: source-cache/fonts
-          key: stronghold-assets-fonts-${{ steps.asset_sources.outputs.fonts }}-${{ steps.asset_inputs.outputs.hash }}
-          restore-keys: stronghold-assets-fonts-${{ steps.asset_sources.outputs.fonts }}-
-      - name: Restore gamedata assets
+          restore-keys: stronghold-assets-arkassets-
+      - name: Restore gamedata and fonts
         id: gamedata_cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: source-cache/gamedata
           key: stronghold-assets-gamedata-${{ steps.asset_sources.outputs.gamedata }}-${{ steps.asset_inputs.outputs.hash }}
-          restore-keys: stronghold-assets-gamedata-${{ steps.asset_sources.outputs.gamedata }}-
+          restore-keys: stronghold-assets-gamedata-
       - name: Assemble cached assets
         run: python3 collection/Stronghold-Protocol/asset_cache.py restore upstream source-cache
       - name: Fetch optional assets
@@ -123,14 +139,10 @@ jobs:
           set -euo pipefail
           npm ci --omit=dev --ignore-scripts --no-audit --no-fund
           for attempt in 1 2 3; do
-            if node tools/fetch-assets.mjs --prune && \
-               python3 ../collection/Stronghold-Protocol/asset_cache.py prune-fonts .; then
-              if node ../collection/Stronghold-Protocol/verify-assets.mjs; then exit 0; fi
-              if [[ "$attempt" -eq 3 ]] && \
-                 node ../collection/Stronghold-Protocol/verify-assets.mjs --allow-download-errors; then
-                echo '::warning::Some optional art downloads failed; publishing the verified available assets.'
-                exit 0
-              fi
+            if node tools/fetch-assets.mjs --source-snapshot=.cache/asset-sources.json --prune && \
+               python3 ../collection/Stronghold-Protocol/asset_cache.py prune-fonts . && \
+               node ../collection/Stronghold-Protocol/verify-assets.mjs; then
+              exit 0
             fi
             if [[ "$attempt" -eq 3 ]]; then exit 1; fi
             sleep "$((attempt * 5))"
@@ -177,14 +189,7 @@ jobs:
         with:
           path: source-cache/arkassets
           key: ${{ steps.arkassets_cache.outputs.cache-primary-key }}
-      - name: Cache fonts assets
-        if: steps.prepare_source_caches.outcome == 'success' && steps.fonts_cache.outputs.cache-hit != 'true'
-        continue-on-error: true
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: source-cache/fonts
-          key: ${{ steps.fonts_cache.outputs.cache-primary-key }}
-      - name: Cache gamedata assets
+      - name: Cache gamedata and fonts
         if: steps.prepare_source_caches.outcome == 'success' && steps.gamedata_cache.outputs.cache-hit != 'true'
         continue-on-error: true
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

@@ -26,17 +26,25 @@ docker buildx build --load \
 ```
 
 The workflow checks out the configured Stronghold release, downloads optional art and battle voices
-with Node.js 24, and verifies them. It caches assets separately for each of the
-six external source repositories. A cache key includes that repository's current
-Git branch revisions and the asset generator inputs. When one source advances,
-the workflow still restores the other five caches; the changed source downloads
-fresh files because existing files may have changed in place. The downloader
-skips valid unchanged files, adds new ones, and `--prune` removes files absent
-from the new manifest. Font files that the new manifest no longer references
-are removed before caching and uploading.
+with Node.js 24, and verifies them. The asset job uses the separately pinned asset-tool
+commit in the workflow until a release includes source-snapshot verification; this
+does not change the game server or browser release in the image.
+It caches six external source repositories in five groups, with fonts and gamedata
+sharing a group. Keys use Git content-tree IDs and generator inputs. Each group can
+restore its latest successful cache when the exact key is absent, including after
+yuanyan updates. Metadata-only commits do not change a content-tree fingerprint.
+
+Restored files are candidates, not trusted output. The downloader checks raw files
+and indexes against Git blob hashes from pinned source commits before reuse or
+acceptance. Same-size replacements and stale mirror responses fail that check.
+It downloads changed files and reuses unchanged raw files. Normalized atlases and
+generated font files are rebuilt from verified originals. `--prune` removes assets
+absent from the new manifest; unreferenced font files are removed before caching
+and uploading. Source API failures do not bypass verification. Cache restore and
+save logs count assets, fonts, and indexes separately.
 The workflow uploads one combined asset bundle for both architecture builds.
-After three attempts, individual failed downloads are omitted from the manifest;
-verified available art is still bundled and cached. If asset verification fails,
+Missing optional files may be omitted from the manifest. If downloads or verification
+still fail after three attempts,
 the workflow builds with the upstream placeholder manifest instead.
 The workflow also uploads `upstream/.cache/assets-report.json`, when present, as
 the separate `stronghold-protocol-asset-download-report` artifact in the workflow
@@ -121,6 +129,7 @@ The scripts use Node standard APIs. Run the tests with a Node version that suppo
 
 ```sh
 node --test Stronghold-Protocol/entrypoint_test.ts
+python3 -m unittest discover -s Stronghold-Protocol -p 'asset_cache_test.py'
 ```
 
 To validate with the Deno engine from `Dockerfile`:
