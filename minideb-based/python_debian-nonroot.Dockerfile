@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM mirror.gcr.io/bitnami/minideb:latest@sha256:f806691cb29f6477ffa2511fe25c86751f1fa980aef22e77d2eba00462c82d0f
+FROM mirror.gcr.io/bitnami/minideb:latest@sha256:12512d9e1199242d3803efdbb64889d1100ca6da58aa70431f695b8fe2a7b9ea
 # refer to: https://github.com/GoogleContainerTools/distroless/blob/f9a9ff8921bda8fda2276853804e36d2ac988b16/python3/BUILD
 RUN install_packages \
         ca-certificates catatonit \
