@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM cgr.dev/chainguard/python:latest-dev@sha256:f07413fa2abb281095b499d58ba7bf6e87d45411dda711e59f2c755efff1d91e AS assets
+FROM cgr.dev/chainguard/python:latest-dev@sha256:10b20ac005729c71a48ad6232c726527274959aec1e5e9ebae4ac86745b4c078 AS assets
 SHELL ["/usr/bin/bash", "-o", "pipefail", "-c"]
 USER root:root
 RUN apk update \
