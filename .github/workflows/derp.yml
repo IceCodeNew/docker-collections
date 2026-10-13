@@ -12,7 +12,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale
-  TAILSCALE_VERSION: v1.102.5
+  TAILSCALE_VERSION: v1.104.1
 
 jobs:
   publish:

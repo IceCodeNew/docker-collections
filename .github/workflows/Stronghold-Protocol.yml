@@ -64,7 +64,7 @@ jobs:
         run: |
           echo 'hash=${{ hashFiles('upstream/package-lock.json', 'upstream/tools/fetch-assets.mjs', 'upstream/tools/assets/**', 'upstream/shared/constants.js', 'upstream/data/assets.json', 'upstream/data/backups.json', 'upstream/data/bosses.json', 'upstream/data/chess.json', 'upstream/data/enemies.json', 'upstream/data/tokens.json', 'upstream/docs/research/03-operators.json', 'upstream/docs/research/05-enemies.json', 'upstream/docs/research/05-maps.json', 'upstream/docs/research/07-assets.json') }}' >> "$GITHUB_OUTPUT"
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.x'
           check-latest: true
@@ -137,7 +137,7 @@ jobs:
           done
       - name: Upload asset download report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: stronghold-protocol-asset-download-report
           path: upstream/.cache/assets-report.json
@@ -208,7 +208,7 @@ jobs:
             git -C upstream show HEAD:data/assets.json > "$bundle/data/assets.json"
           fi
       - name: Upload asset bundle
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: stronghold-protocol-assets
           path: /tmp/stronghold-protocol-assets/
@@ -237,7 +237,7 @@ jobs:
           repository: ${{ inputs.source_sha != '' && 'IceCodeNew/Stronghold-Protocol' || 'sganggs/Stronghold-Protocol' }}
           ref: ${{ inputs.source_sha || env.STRONGHOLD_PROTOCOL_VERSION }}
       - name: Download asset bundle
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: stronghold-protocol-assets
           path: ./asset-bundle
@@ -332,7 +332,7 @@ jobs:
           touch "/tmp/stronghold-protocol-digests/${digest#sha256:}"
       - name: Upload digest
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: stronghold-protocol-digests-${{ strategy.job-index }}
           path: /tmp/stronghold-protocol-digests/*
@@ -348,7 +348,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Download digests
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: /tmp/stronghold-protocol-digests/
           pattern: stronghold-protocol-digests-*
