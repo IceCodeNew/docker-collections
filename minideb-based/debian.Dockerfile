@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM mirror.gcr.io/bitnami/minideb:latest@sha256:5d9a947cfdb47746192a3b08aeb5d5da28facadcbe0fb191a895980cc3de891b AS debian-base
+FROM mirror.gcr.io/bitnami/minideb:latest@sha256:5fa9534c248eda4a6288e3fad6fbac4a12a5e371a0d4d7fd5ada6424ca61965c AS debian-base
 ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
