@@ -426,6 +426,18 @@ for (
   const scenario of [
     { name: "valid nested assets and fonts", report: {}, error: undefined },
     {
+      name: "cached art with no new downloads",
+      report: { totals: { ok: 0, skip: 1, error: 0 } },
+      summary: /newly downloaded=0; reused existing files \(cache or earlier attempt\)=1/,
+      error: undefined,
+    },
+    {
+      name: "font-only manifest after art downloads were dropped",
+      report: { totals: { ok: 0, skip: 0, miss: 10, error: 0 } },
+      noArt: true,
+      error: /No art files/,
+    },
+    {
       name: "complete image art when required",
       report: {},
       image: true,
@@ -448,22 +460,37 @@ for (
       error: /ENOENT|No such file/,
     },
     {
-      name: "optional image art when disabled",
+      name: "empty image art when required",
+      report: {},
+      image: true,
+      required: "1",
+      noArt: true,
+      error: /No art files/,
+    },
+    {
+      name: "empty image art when disabled",
       report: {},
       image: true,
       required: "0",
+      noArt: true,
       file: "missing",
       error: undefined,
     },
     {
-      name: "font errors",
+      name: "individual font download errors with usable art",
       report: { fontErrors: ["font"] },
-      error: /assets-report\.json/,
+      error: undefined,
     },
     {
-      name: "a nonzero error total",
-      report: { totals: { error: 1 } },
-      error: /assets-report\.json/,
+      name: "individual missing and failed downloads with usable art",
+      report: { totals: { ok: 0, skip: 1, miss: 4, error: 1 } },
+      error: undefined,
+    },
+    {
+      name: "failed downloads with no usable art",
+      report: { totals: { ok: 0, skip: 0, error: 10 } },
+      noArt: true,
+      error: /No art files/,
     },
     {
       name: "an orphaned old asset",
@@ -513,7 +540,7 @@ for (
         `${dir}/data/assets.json`,
         JSON.stringify({
           nested: [{
-            image: "/assets/icon.svg",
+            image: scenario.noArt ? null : "/assets/icon.svg",
             fonts: { regular: "/fonts/text.woff2" },
           }],
           external: "https://example.invalid/image.svg",
@@ -541,6 +568,7 @@ for (
       const stderr = result.stderr;
       if (scenario.error) assert.match(stderr, scenario.error);
       else assert.equal(stderr, "");
+      if (scenario.summary) assert.match(result.stdout, scenario.summary);
     } finally {
       await rm(dir, { recursive: true });
     }

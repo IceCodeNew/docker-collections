@@ -116,23 +116,22 @@ jobs:
         run: python3 collection/Stronghold-Protocol/asset_cache.py restore upstream source-cache
       - name: Fetch optional assets
         id: fetch_assets
-        continue-on-error: true
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
           npm ci --omit=dev --ignore-scripts --no-audit --no-fund
           for attempt in 1 2 3; do
+            echo "Asset download attempt $attempt/3: ok=newly downloaded; skip=reused existing files (cache or earlier attempt); miss=missing upstream; err=download errors."
+            echo 'Zero new downloads is normal when existing files are reused; the verified manifest determines whether art is available.'
             if node tools/fetch-assets.mjs --prune && \
                python3 ../collection/Stronghold-Protocol/asset_cache.py prune-fonts .; then
               if node ../collection/Stronghold-Protocol/verify-assets.mjs; then exit 0; fi
-              if [[ "$attempt" -eq 3 ]] && \
-                 node ../collection/Stronghold-Protocol/verify-assets.mjs --allow-download-errors; then
-                echo '::warning::Some optional art downloads failed; publishing the verified available assets.'
-                exit 0
-              fi
             fi
-            if [[ "$attempt" -eq 3 ]]; then exit 1; fi
+            if [[ "$attempt" -eq 3 ]]; then
+              echo '::error::Asset download or verification failed after three attempts; image builds are blocked.'
+              exit 1
+            fi
             sleep "$((attempt * 5))"
           done
       - name: Upload asset download report
@@ -188,7 +187,6 @@ jobs:
         id: asset_bundle
         shell: bash
         env:
-          FETCH_OUTCOME: ${{ steps.fetch_assets.outcome }}
           ASSET_CACHE_KEYS: >-
             {"yuanyan":"${{ steps.yuanyan_cache.outputs.cache-matched-key }}",
              "fexli":"${{ steps.fexli_cache.outputs.cache-matched-key }}",
@@ -199,14 +197,8 @@ jobs:
           set -euo pipefail
           bundle=/tmp/stronghold-protocol-assets
           mkdir -p "$bundle/public" "$bundle/data"
-          if [[ "$FETCH_OUTCOME" == success ]]; then
-            mv upstream/public/assets upstream/public/fonts "$bundle/public/"
-            cp upstream/data/assets.json "$bundle/data/assets.json"
-          else
-            echo '::warning::Optional art download failed; building with upstream fallback graphics.'
-            mkdir -p "$bundle/public/assets" "$bundle/public/fonts"
-            git -C upstream show HEAD:data/assets.json > "$bundle/data/assets.json"
-          fi
+          mv upstream/public/assets upstream/public/fonts "$bundle/public/"
+          cp upstream/data/assets.json "$bundle/data/assets.json"
           python3 collection/Stronghold-Protocol/asset_cache.py split-bundle "$bundle" upstream/.cache/restored-assets.json
           echo "cache_keys=$(jq -c '.keys' "$bundle/cache-files.json")" >> "$GITHUB_OUTPUT"
       - name: Upload asset bundle

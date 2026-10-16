@@ -11,13 +11,13 @@ if (imageMode) {
   const report = JSON.parse(
     await readFile(".cache/assets-report.json", "utf8"),
   );
-  const allowDownloadErrors = process.argv.includes("--allow-download-errors");
-  if (
-    !allowDownloadErrors &&
-    (report.fontErrors.length !== 0 || report.totals.error !== 0)
-  ) {
-    throw new Error("Asset download failed: check .cache/assets-report.json.");
-  }
+  console.log(
+    `Asset downloads: newly downloaded=${report.totals.ok ?? 0}; ` +
+    `reused existing files (cache or earlier attempt)=${report.totals.skip ?? 0}; ` +
+    `missing upstream=${report.totals.miss ?? 0}; ` +
+    `download errors=${report.totals.error}; font errors=${report.fontErrors.length}.`,
+  );
+  console.log("Individual missing or failed downloads do not block the build; verifying available files.");
   if (
     report.orphans?.length ||
     report.pruned?.some((file) => existsSync(`public/assets/${file}`))
@@ -42,6 +42,7 @@ async function verify(value) {
   }
 }
 await verify(JSON.parse(await readFile("data/assets.json", "utf8")));
-if (imageMode && assetCount === 0) {
-  throw new Error("No art files are listed in the image manifest.");
+if (assetCount === 0) {
+  throw new Error("No art files are listed in the asset manifest.");
 }
+console.log(`Verified ${assetCount} available art references on disk (including reused files).`);
