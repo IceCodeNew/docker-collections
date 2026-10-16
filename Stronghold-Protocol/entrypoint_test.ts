@@ -428,6 +428,7 @@ for (
     {
       name: "cached art with no new downloads",
       report: { totals: { ok: 0, skip: 1, error: 0 } },
+      summary: /newly downloaded=0; reused existing files \(cache or earlier attempt\)=1/,
       error: undefined,
     },
     {
@@ -476,14 +477,20 @@ for (
       error: undefined,
     },
     {
-      name: "font errors",
+      name: "individual font download errors with usable art",
       report: { fontErrors: ["font"] },
-      error: /assets-report\.json/,
+      error: undefined,
     },
     {
-      name: "a nonzero error total",
-      report: { totals: { error: 1 } },
-      error: /assets-report\.json/,
+      name: "individual missing and failed downloads with usable art",
+      report: { totals: { ok: 0, skip: 1, miss: 4, error: 1 } },
+      error: undefined,
+    },
+    {
+      name: "failed downloads with no usable art",
+      report: { totals: { ok: 0, skip: 0, error: 10 } },
+      noArt: true,
+      error: /No art files/,
     },
     {
       name: "an orphaned old asset",
@@ -561,6 +568,7 @@ for (
       const stderr = result.stderr;
       if (scenario.error) assert.match(stderr, scenario.error);
       else assert.equal(stderr, "");
+      if (scenario.summary) assert.match(result.stdout, scenario.summary);
     } finally {
       await rm(dir, { recursive: true });
     }

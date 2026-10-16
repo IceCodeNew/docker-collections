@@ -122,6 +122,8 @@ jobs:
           set -euo pipefail
           npm ci --omit=dev --ignore-scripts --no-audit --no-fund
           for attempt in 1 2 3; do
+            echo "Asset download attempt $attempt/3: ok=newly downloaded; skip=reused existing files (cache or earlier attempt); miss=missing upstream; err=download errors."
+            echo 'Zero new downloads is normal when existing files are reused; the verified manifest determines whether art is available.'
             if node tools/fetch-assets.mjs --prune && \
                python3 ../collection/Stronghold-Protocol/asset_cache.py prune-fonts .; then
               if node ../collection/Stronghold-Protocol/verify-assets.mjs; then exit 0; fi
