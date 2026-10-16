@@ -279,7 +279,7 @@ jobs:
             status=$(docker inspect --format '{{.State.Health.Status}}' stronghold-protocol-smoke)
             printf 'Health check %s: %s\n' "$attempt" "$status"
             if [[ "$status" == healthy ]]; then
-              docker exec stronghold-protocol-smoke /usr/local/bin/node --input-type=module -e \
+              docker exec stronghold-protocol-smoke node --input-type=module -e \
                 'const response = await fetch("http://127.0.0.1:3000/packs/index.json");
                  if (!response.ok) throw new Error(`Language packs: HTTP ${response.status}`);
                  const ids = new Set((await response.json()).packs.map((pack) => pack.id));
@@ -299,7 +299,7 @@ jobs:
               asset_file=$(find asset-bundle/public/assets -type f -print -quit)
               if [[ -n "$asset_file" ]]; then
                 asset_path=${asset_file#asset-bundle/public}
-                docker exec stronghold-protocol-smoke /usr/local/bin/node --input-type=module -e \
+                docker exec stronghold-protocol-smoke node --input-type=module -e \
                   'const path = process.argv[1];
                    const response = await fetch(`http://127.0.0.1:3000${path}`);
                    if (!response.ok) throw new Error(`Asset ${path}: HTTP ${response.status}`);' \

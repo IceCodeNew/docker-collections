@@ -45,14 +45,14 @@ COPY --link --chown=1993:1993 --from=app /app/plugins /app/plugins
 USER 1993:1993
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD ["/usr/local/bin/node", "/usr/local/lib/stronghold-protocol/healthcheck.ts"]
-ENTRYPOINT ["/usr/bin/catatonit", "--", "/usr/local/bin/node", "/usr/local/lib/stronghold-protocol/entrypoint.ts"]
-CMD ["/usr/local/bin/node", "server/index.js"]
+    CMD ["node", "/usr/local/lib/stronghold-protocol/healthcheck.ts"]
+ENTRYPOINT ["/usr/bin/catatonit", "--", "node", "/usr/local/lib/stronghold-protocol/entrypoint.ts"]
+CMD ["node", "server/index.js"]
 
 FROM runtime AS tested
 ARG FETCH_ASSETS=0
 RUN --mount=type=bind,source=./verify-assets.mjs,target=/verify-assets.mjs \
-    ["/usr/local/bin/node", "/verify-assets.mjs", "--image"]
+    ["node", "/verify-assets.mjs", "--image"]
 COPY --link --from=tests /tmp/stronghold-tests-passed /tmp/stronghold-tests-passed
 
 FROM runtime AS final
