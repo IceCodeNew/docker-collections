@@ -144,16 +144,28 @@ def prune_fonts(upstream):
 def save(upstream, caches):
     ledger = read_ledger(upstream / ".cache/assets-ledger.json")
     grouped = {name: {} for name in GROUPS}
+    webview_count = 0
     for file in (upstream / "public/assets").rglob("*"):
         if not file.is_file():
             continue
         rel = file.relative_to(upstream / "public/assets").as_posix()
-        name = source_for(ledger.get(rel, {}).get("url", ""))
+        url = ledger.get(rel, {}).get("url", "")
+        # Official webview jobs have no Git content tree to bind a cache to.
+        # Keep them in the bundle and let the downloader regenerate them next run.
+        if rel.startswith("ui/statistics/") and url.startswith((
+            "https://web.hycdn.cn/arknights/webview/assets/",
+            "data:image/png;base64,", "data:image/svg+xml;base64,",
+            "data:text/css;charset=utf-8,",
+        )):
+            webview_count += 1
+            continue
+        name = source_for(url)
         if name is None:
             raise ValueError(f"No known source for {rel}; refusing to cache it")
         if name == "fonts":
             name = "gamedata"
         grouped[name][rel] = ledger[rel]
+    print(f"Kept {webview_count} webview assets in bundle only; excluded from Git source caches")
     for name in GROUPS:
         shard = caches / name
         shutil.rmtree(shard, ignore_errors=True)

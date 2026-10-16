@@ -32,7 +32,17 @@ class CacheTest(unittest.TestCase):
             rel = f"{source}/keep.png"
             self.write(self.upstream / "public/assets" / rel, source.encode())
             ledger[rel] = {"url": f"https://raw.githubusercontent.com/{repo}/main/keep.png"}
-        self.write(self.upstream / ".cache/assets-ledger.json", {"files": ledger})
+        webview = {
+            "ui/statistics/achievement-bond-frame.png": {"url": "data:image/png;base64,aW1hZ2U="},
+            "ui/statistics/title-mask.svg": {"url": "data:image/svg+xml;base64,PHN2Zy8+"},
+            "ui/statistics/fonts.css": {"url": "data:text/css;charset=utf-8,body%7B%7D"},
+            "ui/statistics/number-font.woff2": {
+                "url": "https://web.hycdn.cn/arknights/webview/assets/fonts/NovecentoWide-Medium.fb69ff.woff2",
+            },
+        }
+        for rel in webview:
+            self.write(self.upstream / "public/assets" / rel, b"webview bytes")
+        self.write(self.upstream / ".cache/assets-ledger.json", {"files": ledger | webview})
         self.write(self.upstream / "public/fonts/a.ttf", b"font bytes")
         self.write(self.upstream / "public/fonts/a.woff2", b"converted bytes")
         self.write(self.upstream / "public/fonts/obsolete.ttf", b"obsolete")
@@ -44,8 +54,12 @@ class CacheTest(unittest.TestCase):
         self.write(self.upstream / ".cache/ark-models/models_data.json", b'{"model":"old"}')
         cache.prune_fonts(self.upstream)
         cache.save(self.upstream, self.caches)
+        for rel in webview:
+            self.assertEqual((self.upstream / "public/assets" / rel).read_bytes(), b"webview bytes")
+        self.assertEqual(cache.read_ledger(self.upstream / ".cache/assets-ledger.json"), ledger | webview)
         shutil.rmtree(self.upstream)
         cache.restore(self.upstream, self.caches)
+        self.assertFalse((self.upstream / "public/assets/ui/statistics").exists())
         self.assertFalse((self.caches / "fonts").exists())
         self.assertFalse((self.upstream / "public/fonts/obsolete.ttf").exists())
         self.assertEqual((self.upstream / "public/fonts/a.woff2").read_bytes(), b"converted bytes")
@@ -54,6 +68,17 @@ class CacheTest(unittest.TestCase):
         self.assertEqual(json.loads((self.upstream / ".cache/assets-ledger.json").read_text())["files"], ledger)
         for source in cache.GROUPS:
             self.assertEqual((self.upstream / f"public/assets/{source}/keep.png").read_bytes(), source.encode())
+
+    def test_save_rejects_unknown_provenance_even_in_statistics(self):
+        rel = "ui/statistics/achievement-bond-frame.png"
+        self.write(self.upstream / "public/assets" / rel, b"image")
+        for url in ("", "https://example.com/image.png", "data:application/octet-stream;base64,YQ==",
+                    "https://web.hycdn.cn.example.com/arknights/webview/assets/image.png",
+                    "https://raw.githubusercontent.com/unknown/repo/main/image.png"):
+            with self.subTest(url=url):
+                self.write(self.upstream / ".cache/assets-ledger.json", {"files": {rel: {"url": url}}})
+                with self.assertRaisesRegex(ValueError, "No known source"):
+                    cache.save(self.upstream, self.caches)
 
     def test_fingerprint_ignores_commit_metadata_but_tracks_content_and_font_changes(self):
         source = self.root / "source/tools/assets/sources.mjs"

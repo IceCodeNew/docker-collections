@@ -33,6 +33,10 @@ updated source content is downloaded again while unaffected groups keep their ca
 Metadata-only commits do not change a content-tree fingerprint. If a source cannot
 be resolved, its group gets a random key and the downloader runs without a restored
 cache for that group. Cache logs count assets, fonts, and indexes separately.
+Official statistics-page CDN assets, embedded images, and generated CSS remain in
+the uploaded bundle but are excluded from Git source caches. The downloader fetches
+or regenerates them on each run. Other unrecognized asset provenance still fails
+cache preparation.
 
 `--prune` removes assets absent from the new manifest; unreferenced font files are
 removed before caching and uploading.
