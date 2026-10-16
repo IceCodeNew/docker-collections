@@ -24,8 +24,8 @@ on:
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
   STRONGHOLD_PROTOCOL_VERSION: v0.2.6
-  # Asset tooling only; remove this override when the release includes snapshot verification.
-  STRONGHOLD_ASSET_TOOLS_SHA: 594574e47f2980c26ad2da444524c9a56c73664f
+  # Asset tooling only; remove this override when the configured game release includes snapshot verification.
+  STRONGHOLD_ASSET_TOOLS_SHA: e78b67a38eb8cde3794ba8498698049e517cf2c8
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
@@ -64,7 +64,7 @@ jobs:
       - name: Check out snapshot-verifying asset tools
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: IceCodeNew/Stronghold-Protocol
+          repository: sganggs/Stronghold-Protocol
           ref: ${{ env.STRONGHOLD_ASSET_TOOLS_SHA }}
           path: asset-tools
           persist-credentials: false

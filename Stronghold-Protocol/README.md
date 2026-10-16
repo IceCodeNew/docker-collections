@@ -27,7 +27,7 @@ docker buildx build --load \
 
 The workflow checks out the configured Stronghold release, downloads optional art and battle voices
 with Node.js 24, and verifies them. The asset job uses the separately pinned asset-tool
-commit in the workflow until a release includes source-snapshot verification; this
+commit in the workflow until the configured game release includes source-snapshot verification; this
 does not change the game server or browser release in the image.
 It caches six external source repositories in five groups, with fonts and gamedata
 sharing a group. Keys use Git content-tree IDs and generator inputs. Each group can
