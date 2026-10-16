@@ -1,4 +1,4 @@
-"""Cache packaging and source fingerprints; byte verification belongs to upstream."""
+"""Source caches and byte-identical cross-job bundle reconstruction."""
 
 import contextlib
 import io
@@ -79,6 +79,67 @@ class CacheTest(unittest.TestCase):
                 self.write(self.upstream / ".cache/assets-ledger.json", {"files": {rel: {"url": url}}})
                 with self.assertRaisesRegex(ValueError, "No known source"):
                     cache.save(self.upstream, self.caches)
+
+    def test_bundle_omits_only_unchanged_restored_files_and_reconstructs_exactly(self):
+        self.write(self.caches / "yuanyan/assets/stable.png", b"stable")
+        self.write(self.caches / "yuanyan/assets/changed.png", b"old")
+        self.write(self.caches / "yuanyan/assets/obsolete.png", b"obsolete")
+        self.write(self.caches / "gamedata/fonts/a.woff2", b"font")
+        self.write(self.caches / "models/assets/unconfirmed.png", b"no key")
+        consumer_caches = self.root / "consumer-caches"
+        shutil.copytree(self.caches, consumer_caches)
+        cache.restore(self.upstream, self.caches)
+        # Same-size normalization mutates the local hard link, not the remote cache.
+        self.write(self.upstream / "public/assets/changed.png", b"new")
+        (self.upstream / "public/assets/obsolete.png").unlink()
+        self.write(self.upstream / "public/assets/new.png", b"download")
+        self.write(self.upstream / "public/assets/ui/statistics/frame.png", b"webview")
+        self.write(self.upstream / "data/assets.json", {"assets": "current manifest"})
+        bundle = self.root / "bundle"
+        shutil.copytree(self.upstream / "public", bundle / "public")
+        shutil.copytree(self.upstream / "data", bundle / "data")
+        expected = {p.relative_to(bundle): p.read_bytes() for p in bundle.rglob("*") if p.is_file()}
+        keys = {"yuanyan": "exact-art-key", "gamedata": "exact-font-key", "models": ""}
+        cache.split_bundle(bundle, self.upstream / ".cache/restored-assets.json", keys)
+        self.assertFalse((bundle / "public/assets/stable.png").exists())
+        self.assertFalse((bundle / "public/fonts/a.woff2").exists())
+        for rel in ("changed.png", "new.png", "ui/statistics/frame.png", "unconfirmed.png"):
+            self.assertTrue((bundle / "public/assets" / rel).is_file())
+        metadata = json.loads((bundle / "cache-files.json").read_text())
+        self.assertEqual(metadata["keys"], {"yuanyan": "exact-art-key", "gamedata": "exact-font-key"})
+        cache.hydrate_bundle(bundle, consumer_caches, keys)
+        self.assertEqual({p.relative_to(bundle): p.read_bytes() for p in bundle.rglob("*") if p.is_file()}, expected)
+
+    def test_bundle_without_restored_cache_is_self_contained_including_placeholder(self):
+        for with_art in (True, False):
+            with self.subTest(with_art=with_art):
+                bundle = self.root / str(with_art)
+                self.write(bundle / "data/assets.json", {"placeholder": not with_art})
+                if with_art:
+                    self.write(bundle / "public/assets/new.png", b"new art")
+                expected = {p.relative_to(bundle): p.read_bytes() for p in bundle.rglob("*") if p.is_file()}
+                cache.restore(self.upstream, self.caches)
+                cache.split_bundle(bundle, self.upstream / ".cache/restored-assets.json", {})
+                self.assertEqual(json.loads((bundle / "cache-files.json").read_text())["keys"], {})
+                cache.hydrate_bundle(bundle, self.caches, {})
+                self.assertEqual({p.relative_to(bundle): p.read_bytes() for p in bundle.rglob("*") if p.is_file()}, expected)
+
+    def test_bundle_rejects_unavailable_wrong_or_corrupt_cache(self):
+        self.write(self.caches / "yuanyan/assets/a.png", b"right")
+        cache.restore(self.upstream, self.caches)
+        bundle = self.root / "bundle"
+        shutil.copytree(self.upstream / "public", bundle / "public")
+        cache.split_bundle(bundle, self.upstream / ".cache/restored-assets.json", {"yuanyan": "exact"})
+        for restored_keys in ({}, {"yuanyan": "prefix-match"}):
+            with self.subTest(keys=restored_keys), self.assertRaisesRegex(ValueError, "Exact asset cache unavailable"):
+                cache.hydrate_bundle(bundle, self.caches, restored_keys)
+        self.write(self.caches / "yuanyan/assets/a.png", b"wrong")
+        with self.assertRaisesRegex(ValueError, "Cached asset missing or changed"):
+            cache.hydrate_bundle(bundle, self.caches, {"yuanyan": "exact"})
+        (self.caches / "yuanyan/assets/a.png").unlink()
+        with self.assertRaisesRegex(ValueError, "Cached asset missing or changed"):
+            cache.hydrate_bundle(bundle, self.caches, {"yuanyan": "exact"})
+        self.assertFalse((bundle / "public/assets/a.png").exists())
 
     def test_fingerprint_ignores_commit_metadata_but_tracks_content_and_font_changes(self):
         source = self.root / "source/tools/assets/sources.mjs"

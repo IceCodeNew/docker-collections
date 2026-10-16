@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       fetched: ${{ steps.fetch_assets.outcome == 'success' && '1' || '0' }}
+      cache_keys: ${{ steps.asset_bundle.outputs.cache_keys }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -184,9 +185,16 @@ jobs:
           path: source-cache/gamedata
           key: ${{ steps.gamedata_cache.outputs.cache-primary-key }}
       - name: Prepare asset bundle
+        id: asset_bundle
         shell: bash
         env:
           FETCH_OUTCOME: ${{ steps.fetch_assets.outcome }}
+          ASSET_CACHE_KEYS: >-
+            {"yuanyan":"${{ steps.yuanyan_cache.outputs.cache-matched-key }}",
+             "fexli":"${{ steps.fexli_cache.outputs.cache-matched-key }}",
+             "models":"${{ steps.models_cache.outputs.cache-matched-key }}",
+             "arkassets":"${{ steps.arkassets_cache.outputs.cache-matched-key }}",
+             "gamedata":"${{ steps.gamedata_cache.outputs.cache-matched-key }}"}
         run: |
           set -euo pipefail
           bundle=/tmp/stronghold-protocol-assets
@@ -199,6 +207,8 @@ jobs:
             mkdir -p "$bundle/public/assets" "$bundle/public/fonts"
             git -C upstream show HEAD:data/assets.json > "$bundle/data/assets.json"
           fi
+          python3 collection/Stronghold-Protocol/asset_cache.py split-bundle "$bundle" upstream/.cache/restored-assets.json
+          echo "cache_keys=$(jq -c '.keys' "$bundle/cache-files.json")" >> "$GITHUB_OUTPUT"
       - name: Upload asset bundle
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -233,6 +243,55 @@ jobs:
         with:
           name: stronghold-protocol-assets
           path: ./asset-bundle
+      - name: Restore bundle yuanyan assets
+        id: bundle_yuanyan
+        if: fromJSON(needs.asset_bundle.outputs.cache_keys).yuanyan != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: source-cache/yuanyan
+          key: ${{ fromJSON(needs.asset_bundle.outputs.cache_keys).yuanyan }}
+          fail-on-cache-miss: true
+      - name: Restore bundle fexli assets
+        id: bundle_fexli
+        if: fromJSON(needs.asset_bundle.outputs.cache_keys).fexli != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: source-cache/fexli
+          key: ${{ fromJSON(needs.asset_bundle.outputs.cache_keys).fexli }}
+          fail-on-cache-miss: true
+      - name: Restore bundle models assets
+        id: bundle_models
+        if: fromJSON(needs.asset_bundle.outputs.cache_keys).models != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: source-cache/models
+          key: ${{ fromJSON(needs.asset_bundle.outputs.cache_keys).models }}
+          fail-on-cache-miss: true
+      - name: Restore bundle arkassets assets
+        id: bundle_arkassets
+        if: fromJSON(needs.asset_bundle.outputs.cache_keys).arkassets != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: source-cache/arkassets
+          key: ${{ fromJSON(needs.asset_bundle.outputs.cache_keys).arkassets }}
+          fail-on-cache-miss: true
+      - name: Restore bundle gamedata and fonts
+        id: bundle_gamedata
+        if: fromJSON(needs.asset_bundle.outputs.cache_keys).gamedata != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: source-cache/gamedata
+          key: ${{ fromJSON(needs.asset_bundle.outputs.cache_keys).gamedata }}
+          fail-on-cache-miss: true
+      - name: Reassemble asset bundle
+        env:
+          ASSET_CACHE_KEYS: >-
+            {"yuanyan":"${{ steps.bundle_yuanyan.outputs.cache-matched-key }}",
+             "fexli":"${{ steps.bundle_fexli.outputs.cache-matched-key }}",
+             "models":"${{ steps.bundle_models.outputs.cache-matched-key }}",
+             "arkassets":"${{ steps.bundle_arkassets.outputs.cache-matched-key }}",
+             "gamedata":"${{ steps.bundle_gamedata.outputs.cache-matched-key }}"}
+        run: python3 collection/Stronghold-Protocol/asset_cache.py hydrate-bundle asset-bundle source-cache
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:

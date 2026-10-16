@@ -40,7 +40,14 @@ cache preparation.
 
 `--prune` removes assets absent from the new manifest; unreferenced font files are
 removed before caching and uploading.
-The workflow uploads one combined asset bundle for both architecture builds.
+The workflow uploads a delta asset bundle for both architecture builds. Files that
+match the SHA-256 inventory of a successfully restored cache are omitted; new or
+changed files stay in the artifact, alongside the current manifest and cache-file
+inventory. Each architecture restores the recorded exact cache keys and verifies
+the omitted files before rebuilding the bundle. Unreferenced cached files are not
+copied into it. An unavailable cache or a checksum mismatch fails the image job.
+With no restored caches, the artifact contains the full bundle. A delta artifact
+alone is not a complete asset pack; it depends on the recorded GitHub Actions caches.
 After three attempts, individual failed downloads are omitted from the manifest;
 verified available art is still bundled and cached. If asset verification fails,
 the workflow builds with the upstream placeholder manifest instead. An unconfigured
