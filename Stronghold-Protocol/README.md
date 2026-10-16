@@ -26,27 +26,21 @@ docker buildx build --load \
 ```
 
 The workflow checks out the configured Stronghold release, downloads optional art and battle voices
-with Node.js 24, and verifies them. The asset job uses the separately pinned asset-tool
-commit in the workflow until the configured game release includes source-snapshot verification; this
-does not change the game server or browser release in the image.
-It caches six external source repositories in five groups, with fonts and gamedata
-sharing a group. Keys use Git content-tree IDs and generator inputs. Each group can
-restore its latest successful cache when the exact key is absent, including after
-yuanyan updates. Metadata-only commits do not change a content-tree fingerprint.
+with Node.js 24, and verifies them. It caches six external source repositories in
+five groups, with fonts and gamedata sharing a group. Keys use Git content-tree IDs
+and generator inputs. A group restores only caches with the same source tree, so
+updated source content is downloaded again while unaffected groups keep their caches.
+Metadata-only commits do not change a content-tree fingerprint. If a source cannot
+be resolved, its group gets a random key and the downloader runs without a restored
+cache for that group. Cache logs count assets, fonts, and indexes separately.
 
-Restored files are candidates, not trusted output. The downloader checks raw files
-and indexes against Git blob hashes from pinned source commits before reuse or
-acceptance. Same-size replacements and stale mirror responses fail that check.
-It downloads changed files and reuses unchanged raw files. Normalized atlases and
-generated font files are rebuilt from verified originals. `--prune` removes assets
-absent from the new manifest; unreferenced font files are removed before caching
-and uploading. Source API failures do not bypass verification. Cache restore and
-save logs count assets, fonts, and indexes separately.
+`--prune` removes assets absent from the new manifest; unreferenced font files are
+removed before caching and uploading.
 The workflow uploads one combined asset bundle for both architecture builds.
-Missing optional files may be omitted from the manifest. If source resolution,
-downloads, or verification still fail after three attempts, the workflow builds
-with the upstream placeholder manifest instead. An unconfigured source repository
-remains a configuration error and stops the job.
+After three attempts, individual failed downloads are omitted from the manifest;
+verified available art is still bundled and cached. If asset verification fails,
+the workflow builds with the upstream placeholder manifest instead. An unconfigured
+source repository remains a configuration error and stops the job.
 The workflow also uploads `upstream/.cache/assets-report.json`, when present, as
 the separate `stronghold-protocol-asset-download-report` artifact in the workflow
 run's artifacts list. This report remains available after a failed asset fetch;

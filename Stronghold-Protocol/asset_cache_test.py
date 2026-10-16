@@ -70,29 +70,26 @@ class CacheTest(unittest.TestCase):
         self.assertEqual(fingerprints[0], fingerprints[1])
         self.assertNotEqual(fingerprints[1]["gamedata"], fingerprints[2]["gamedata"])
         self.assertEqual(fingerprints[1]["yuanyan"], fingerprints[2]["yuanyan"])
-        snapshot = json.loads((source.parents[2] / ".cache/asset-sources.json").read_text())
-        self.assertEqual(snapshot[f"{cache.SOURCES['fonts']}@main"], {"commit": "third", "tree": "different"})
 
-    def test_source_outage_retries_then_selects_placeholder_without_stale_snapshot(self):
+    def test_source_outage_invalidates_only_affected_cache(self):
         source = self.root / "source/tools/assets/sources.mjs"
-        target = source.parents[2] / ".cache/asset-sources.json"
-        self.write(source, f"https://raw.githubusercontent.com/{cache.SOURCES['yuanyan']}/main/".encode())
-        good = {"sha": "new", "commit": {"tree": {"sha": "new-tree"}}}
-        for failures, ready in (([OSError("timeout"), OSError("rate limit"), good], "true"),
-                                (OSError("unavailable"), "false")):
-            self.write(target, {"stale": True})
+        self.write(source, "\n".join(
+            f"https://raw.githubusercontent.com/{repo}/main/" for repo in cache.SOURCES.values()
+        ).encode())
+        fingerprints = []
+        for failed in (False, True):
+            def api(endpoint):
+                if failed and cache.SOURCES["yuanyan"] in endpoint:
+                    raise OSError("unavailable")
+                return {"commit": {"tree": {"sha": "unchanged"}}}
             output = io.StringIO()
-            with patch.object(cache, "github_json", side_effect=failures), patch("time.sleep"), \
+            with patch.object(cache, "github_json", side_effect=api), \
                     contextlib.redirect_stdout(output), contextlib.redirect_stderr(io.StringIO()):
                 cache.revisions(source)
-            values = dict(line.split("=") for line in output.getvalue().splitlines())
-            self.assertEqual(values["ready"], ready)
-            if ready == "false":
-                self.assertEqual(values, {"ready": "false"})
-                self.assertFalse(target.exists())
-            else:
-                self.assertEqual(json.loads(target.read_text())[f"{cache.SOURCES['yuanyan']}@main"],
-                                 {"commit": "new", "tree": "new-tree"})
+            fingerprints.append(dict(line.split("=") for line in output.getvalue().splitlines()))
+        self.assertNotEqual(fingerprints[0]["yuanyan"], fingerprints[1]["yuanyan"])
+        for group in cache.GROUPS.keys() - {"yuanyan"}:
+            self.assertEqual(fingerprints[0][group], fingerprints[1][group])
         self.write(source, b"https://raw.githubusercontent.com/unknown/repo/main/")
         with patch.object(cache, "github_json", side_effect=OSError("unavailable")):
             with self.assertRaisesRegex(ValueError, "New source repository"):
