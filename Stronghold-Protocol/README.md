@@ -48,10 +48,12 @@ the omitted files before rebuilding the bundle. Unreferenced cached files are no
 copied into it. An unavailable cache or a checksum mismatch fails the image job.
 With no restored caches, the artifact contains the full bundle. A delta artifact
 alone is not a complete asset pack; it depends on the recorded GitHub Actions caches.
-After three attempts, individual failed downloads are omitted from the manifest;
-verified available art is still bundled and cached. If asset verification fails,
-the workflow builds with the upstream placeholder manifest instead. An unconfigured
-source repository remains a configuration error and stops the job.
+After three attempts, download errors or failed verification stop the asset job
+and block image builds and publication. The workflow never substitutes a placeholder
+bundle after failure. Verification requires a nonempty art manifest and nonempty
+files for every art and font reference; a fully cached run needs no new downloads.
+Upstream-reported missing optional resources remain allowed, so this does not promise
+complete game art. An unconfigured source repository also stops the job.
 The workflow also uploads `upstream/.cache/assets-report.json`, when present, as
 the separate `stronghold-protocol-asset-download-report` artifact in the workflow
 run's artifacts list. This report remains available after a failed asset fetch;

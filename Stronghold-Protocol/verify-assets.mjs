@@ -11,11 +11,7 @@ if (imageMode) {
   const report = JSON.parse(
     await readFile(".cache/assets-report.json", "utf8"),
   );
-  const allowDownloadErrors = process.argv.includes("--allow-download-errors");
-  if (
-    !allowDownloadErrors &&
-    (report.fontErrors.length !== 0 || report.totals.error !== 0)
-  ) {
+  if (report.fontErrors.length !== 0 || report.totals.error !== 0) {
     throw new Error("Asset download failed: check .cache/assets-report.json.");
   }
   if (
@@ -42,6 +38,6 @@ async function verify(value) {
   }
 }
 await verify(JSON.parse(await readFile("data/assets.json", "utf8")));
-if (imageMode && assetCount === 0) {
-  throw new Error("No art files are listed in the image manifest.");
+if (assetCount === 0) {
+  throw new Error("No art files are listed in the asset manifest.");
 }

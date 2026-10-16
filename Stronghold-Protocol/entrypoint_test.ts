@@ -426,6 +426,17 @@ for (
   const scenario of [
     { name: "valid nested assets and fonts", report: {}, error: undefined },
     {
+      name: "cached art with no new downloads",
+      report: { totals: { ok: 0, skip: 1, error: 0 } },
+      error: undefined,
+    },
+    {
+      name: "font-only manifest after art downloads were dropped",
+      report: { totals: { ok: 0, skip: 0, miss: 10, error: 0 } },
+      noArt: true,
+      error: /No art files/,
+    },
+    {
       name: "complete image art when required",
       report: {},
       image: true,
@@ -513,7 +524,7 @@ for (
         `${dir}/data/assets.json`,
         JSON.stringify({
           nested: [{
-            image: "/assets/icon.svg",
+            image: scenario.noArt ? null : "/assets/icon.svg",
             fonts: { regular: "/fonts/text.woff2" },
           }],
           external: "https://example.invalid/image.svg",
