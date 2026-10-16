@@ -33,10 +33,21 @@ updated source content is downloaded again while unaffected groups keep their ca
 Metadata-only commits do not change a content-tree fingerprint. If a source cannot
 be resolved, its group gets a random key and the downloader runs without a restored
 cache for that group. Cache logs count assets, fonts, and indexes separately.
+Official statistics-page CDN assets, embedded images, and generated CSS remain in
+the uploaded bundle but are excluded from Git source caches. The downloader fetches
+or regenerates them on each run. Other unrecognized asset provenance still fails
+cache preparation.
 
 `--prune` removes assets absent from the new manifest; unreferenced font files are
 removed before caching and uploading.
-The workflow uploads one combined asset bundle for both architecture builds.
+The workflow uploads a delta asset bundle for both architecture builds. Files that
+match the SHA-256 inventory of a successfully restored cache are omitted; new or
+changed files stay in the artifact, alongside the current manifest and cache-file
+inventory. Each architecture restores the recorded exact cache keys and verifies
+the omitted files before rebuilding the bundle. Unreferenced cached files are not
+copied into it. An unavailable cache or a checksum mismatch fails the image job.
+With no restored caches, the artifact contains the full bundle. A delta artifact
+alone is not a complete asset pack; it depends on the recorded GitHub Actions caches.
 After three attempts, individual failed downloads are omitted from the manifest;
 verified available art is still bundled and cached. If asset verification fails,
 the workflow builds with the upstream placeholder manifest instead. An unconfigured

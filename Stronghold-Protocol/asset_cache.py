@@ -90,12 +90,24 @@ def copy_files(source, target):
             shutil.copy2(file, dest)
 
 
+def file_hash(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
 def restore(upstream, caches):
     merged = {}
+    inventory = {}
     for name in GROUPS:
         shard = caches / name
         if not shard.exists():
             continue
+        # Snapshot before fetch/normalization can change the hard-linked files.
+        inventory[name] = {
+            file.relative_to(shard).as_posix(): file_hash(file)
+            for folder in ("assets", "fonts") for file in (shard / folder).rglob("*")
+            if file.is_file()
+        }
         # The cache key binds this shard to the source content tree.
         copy_files(shard / "assets", upstream / "public/assets")
         if name == "gamedata":
@@ -113,6 +125,53 @@ def restore(upstream, caches):
         if shard.exists():
             print(f"Restored {name}: {cache_counts(shard)}")
     write_ledger(upstream / ".cache/assets-ledger.json", merged)
+    (upstream / ".cache/restored-assets.json").write_text(json.dumps(inventory))
+
+
+def split_bundle(bundle, inventory_path, keys):
+    """Upload only files not proven present in a cache restored by this job."""
+    inventory = json.loads(inventory_path.read_text())
+    cached = {}
+    cached_bytes = 0
+    for name, files in inventory.items():
+        if not keys.get(name):
+            continue
+        for rel, digest in files.items():
+            file = bundle / "public" / rel
+            if file.is_file() and file_hash(file) == digest:
+                cached.setdefault(name, {})[rel] = digest
+                cached_bytes += file.stat().st_size
+    metadata = {"keys": {name: keys[name] for name in cached}, "files": cached}
+    (bundle / "cache-files.json").write_text(json.dumps(metadata))
+    for files in cached.values():
+        for rel in files:
+            (bundle / "public" / rel).unlink()
+    remaining = [file for file in bundle.rglob("*") if file.is_file()]
+    print(f"Bundle: {sum(map(len, cached.values()))} cached files ({cached_bytes} bytes); "
+          f"{len(remaining)} artifact files ({sum(file.stat().st_size for file in remaining)} bytes)")
+
+
+def hydrate_bundle(bundle, caches, restored_keys):
+    """Reassemble the exact producer bundle, rejecting missing or stale caches."""
+    metadata_path = bundle / "cache-files.json"
+    metadata = json.loads(metadata_path.read_text())
+    for name, files in metadata["files"].items():
+        if name not in GROUPS or restored_keys.get(name) != metadata["keys"][name]:
+            raise ValueError(f"Exact asset cache unavailable: {name}")
+        for rel, digest in files.items():
+            path = Path(rel)
+            if len(path.parts) < 2 or path.is_absolute() or ".." in path.parts or path.parts[0] not in ("assets", "fonts"):
+                raise ValueError(f"Invalid cached asset path: {rel}")
+            source = caches / name / rel
+            if not source.is_file() or file_hash(source) != digest:
+                raise ValueError(f"Cached asset missing or changed: {name}/{rel}")
+            dest = bundle / "public" / rel
+            if dest.exists():
+                raise ValueError(f"Asset bundle collision: {rel}")
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, dest)
+    metadata_path.unlink()
+    print(f"Restored {sum(map(len, metadata['files'].values()))} bundle files from exact source caches")
 
 
 def cache_counts(shard):
@@ -144,16 +203,28 @@ def prune_fonts(upstream):
 def save(upstream, caches):
     ledger = read_ledger(upstream / ".cache/assets-ledger.json")
     grouped = {name: {} for name in GROUPS}
+    webview_count = 0
     for file in (upstream / "public/assets").rglob("*"):
         if not file.is_file():
             continue
         rel = file.relative_to(upstream / "public/assets").as_posix()
-        name = source_for(ledger.get(rel, {}).get("url", ""))
+        url = ledger.get(rel, {}).get("url", "")
+        # Official webview jobs have no Git content tree to bind a cache to.
+        # Keep them in the bundle and let the downloader regenerate them next run.
+        if rel.startswith("ui/statistics/") and url.startswith((
+            "https://web.hycdn.cn/arknights/webview/assets/",
+            "data:image/png;base64,", "data:image/svg+xml;base64,",
+            "data:text/css;charset=utf-8,",
+        )):
+            webview_count += 1
+            continue
+        name = source_for(url)
         if name is None:
             raise ValueError(f"No known source for {rel}; refusing to cache it")
         if name == "fonts":
             name = "gamedata"
         grouped[name][rel] = ledger[rel]
+    print(f"Kept {webview_count} webview assets in bundle only; excluded from Git source caches")
     for name in GROUPS:
         shard = caches / name
         shutil.rmtree(shard, ignore_errors=True)
@@ -186,5 +257,9 @@ if __name__ == "__main__":
         prune_fonts(Path(args[0]))
     elif command == "save" and len(args) == 2:
         save(Path(args[0]), Path(args[1]))
+    elif command == "split-bundle" and len(args) == 2:
+        split_bundle(Path(args[0]), Path(args[1]), json.loads(os.environ["ASSET_CACHE_KEYS"]))
+    elif command == "hydrate-bundle" and len(args) == 2:
+        hydrate_bundle(Path(args[0]), Path(args[1]), json.loads(os.environ["ASSET_CACHE_KEYS"]))
     else:
-        raise SystemExit("Usage: asset_cache.py {revisions|restore|prune-fonts|save} ...")
+        raise SystemExit("Usage: asset_cache.py {revisions|restore|prune-fonts|save|split-bundle|hydrate-bundle} ...")
