@@ -26,18 +26,21 @@ docker buildx build --load \
 ```
 
 The workflow checks out the configured Stronghold release, downloads optional art and battle voices
-with Node.js 24, and verifies them. It caches assets separately for each of the
-six external source repositories. A cache key includes that repository's current
-Git branch revisions and the asset generator inputs. When one source advances,
-the workflow still restores the other five caches; the changed source downloads
-fresh files because existing files may have changed in place. The downloader
-skips valid unchanged files, adds new ones, and `--prune` removes files absent
-from the new manifest. Font files that the new manifest no longer references
-are removed before caching and uploading.
+with Node.js 24, and verifies them. It caches six external source repositories in
+five groups, with fonts and gamedata sharing a group. Keys use Git content-tree IDs
+and generator inputs. A group restores only caches with the same source tree, so
+updated source content is downloaded again while unaffected groups keep their caches.
+Metadata-only commits do not change a content-tree fingerprint. If a source cannot
+be resolved, its group gets a random key and the downloader runs without a restored
+cache for that group. Cache logs count assets, fonts, and indexes separately.
+
+`--prune` removes assets absent from the new manifest; unreferenced font files are
+removed before caching and uploading.
 The workflow uploads one combined asset bundle for both architecture builds.
 After three attempts, individual failed downloads are omitted from the manifest;
 verified available art is still bundled and cached. If asset verification fails,
-the workflow builds with the upstream placeholder manifest instead.
+the workflow builds with the upstream placeholder manifest instead. An unconfigured
+source repository remains a configuration error and stops the job.
 The workflow also uploads `upstream/.cache/assets-report.json`, when present, as
 the separate `stronghold-protocol-asset-download-report` artifact in the workflow
 run's artifacts list. This report remains available after a failed asset fetch;
@@ -121,6 +124,7 @@ The scripts use Node standard APIs. Run the tests with a Node version that suppo
 
 ```sh
 node --test Stronghold-Protocol/entrypoint_test.ts
+python3 -m unittest discover -s Stronghold-Protocol -p 'asset_cache_test.py'
 ```
 
 To validate with the Deno engine from `Dockerfile`:
