@@ -1,9 +1,9 @@
 # Stronghold-Protocol
 
 [Upstream](https://github.com/sganggs/Stronghold-Protocol) provides the game server and browser client.
-[Dockerfile](Dockerfile) uses DHI Deno development and runtime images.
-The runtime has no shell or package manager and uses UID/GID `1993:1993`.
-[catatonit](https://github.com/openSUSE/catatonit) runs the Deno entrypoint and reaps orphaned processes.
+[Dockerfile](Dockerfile) uses DHI Node.js 24 development and runtime images.
+The runtime uses UID/GID `1993:1993`.
+[catatonit](https://github.com/openSUSE/catatonit) runs the Node.js entrypoint and reaps orphaned processes.
 
 ## Build
 
@@ -46,9 +46,9 @@ the separate `stronghold-protocol-asset-download-report` artifact in the workflo
 run's artifacts list. This report remains available after a failed asset fetch;
 cancelled runs skip the upload. See the `Upload asset download report` step in
 the image workflow for its retention period. A missing report produces a warning.
-The Dockerfile itself never downloads art. Version 0.2.1 includes four language
-packs in the image; 39 summon models have no public art source and require local
-game client extraction.
+The Dockerfile itself never downloads art. The image includes four language packs
+and the v0.3.0 plugin templates, Schemas, and author tools. Official scenes and
+combat effects still require game client extraction or a matching complete bundle.
 
 For a local image with art, prepare the bundle from a checkout of the release:
 
@@ -114,6 +114,10 @@ The container stops both processes if either process exits.
 It forwards termination signals and allows five seconds for shutdown.
 The health check requests the local `/healthz` endpoint; it does not check Cloudflare connectivity.
 
+Mount a volume at `/app/plugins` to retain installed plugins and Studio settings
+across image updates. The templates stay in `/app/plugin-resources`. Script plugins
+remain disabled unless `SP_PLUGIN_SCRIPTS` is explicitly set.
+
 Do not expose the game port directly to untrusted clients with trusted proxy headers.
 Read the upstream `TRUST_PROXY` guidance in [the deployment guide](https://github.com/sganggs/Stronghold-Protocol/blob/master/docs/DEPLOY.md).
 Game sessions stay in memory and disappear when the server stops.
@@ -127,18 +131,8 @@ node --test Stronghold-Protocol/entrypoint_test.ts
 python3 -m unittest discover -s Stronghold-Protocol -p 'asset_cache_test.py'
 ```
 
-To validate with the Deno engine from `Dockerfile`:
-
-```sh
-deno fmt --check Stronghold-Protocol/*.ts
-deno lint Stronghold-Protocol/*.ts
-deno check Stronghold-Protocol/*.ts
-TEST_RUNTIME_ARGS='["run","--allow-read","--allow-net","--allow-env","--allow-run"]' \
-  deno test -A Stronghold-Protocol/entrypoint_test.ts
-```
-
 The image workflow builds native AMD64 and ARM64 images, checks `/healthz`,
-and verifies the four built-in 0.2.0 language packs before publication.
+and verifies the built-in language packs and plugin resources before publication.
 Its smoke test starts the game without a public tunnel.
 
 ## Licenses
@@ -151,7 +145,6 @@ Read [the upstream notice](https://github.com/sganggs/Stronghold-Protocol/blob/m
 
 ## References
 
-- [DHI Deno guide](https://hub.docker.com/hardened-images/catalog/dhi/deno/guides)
-- [DHI runtime specifications](https://hub.docker.com/hardened-images/catalog/dhi/deno/images/deno%2Fdebian-13%2F2/sha256-10884e38854d6172230cf1b20752ebc2c2ce540cf4aaae4c9a394f39a1146ae7/specifications)
+- [DHI Node.js catalog](https://hub.docker.com/hardened-images/catalog/dhi/node/images)
 - [Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/)
 - [cloudflared run parameters](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/run-parameters/)

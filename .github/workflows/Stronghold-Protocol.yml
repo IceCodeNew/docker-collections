@@ -23,7 +23,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
-  STRONGHOLD_PROTOCOL_VERSION: v0.2.6
+  STRONGHOLD_PROTOCOL_VERSION: v0.3.0
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
@@ -258,7 +258,6 @@ jobs:
             asset_bundle=./asset-bundle
           target: tested
           build-args: |
-            "TEST_RUNTIME_ARGS=[""run"",""--allow-read"",""--allow-net"",""--allow-env"",""--allow-run""]"
             FETCH_ASSETS=${{ needs.asset_bundle.outputs.fetched }}
           platforms: ${{ matrix.platform }}
           load: true
@@ -280,18 +279,28 @@ jobs:
             status=$(docker inspect --format '{{.State.Health.Status}}' stronghold-protocol-smoke)
             printf 'Health check %s: %s\n' "$attempt" "$status"
             if [[ "$status" == healthy ]]; then
-              docker exec stronghold-protocol-smoke /usr/local/bin/deno eval --allow-net \
+              docker exec stronghold-protocol-smoke /usr/local/bin/node --input-type=module -e \
                 'const response = await fetch("http://127.0.0.1:3000/packs/index.json");
                  if (!response.ok) throw new Error(`Language packs: HTTP ${response.status}`);
                  const ids = new Set((await response.json()).packs.map((pack) => pack.id));
                  for (const id of ["en", "ja", "ko", "zh-TW"]) {
                    if (!ids.has(id)) throw new Error(`Missing language pack: ${id}`);
-                 }'
+                 }
+                 const plugins = await fetch("http://127.0.0.1:3000/plugins/index.json");
+                 if (!plugins.ok) throw new Error(`Plugins: HTTP ${plugins.status}`);
+                 const fs = await import("node:fs/promises");
+                 for (const path of ["/app/plugin-resources/_template/content/plugin.json",
+                     "/app/schemas/plugin.schema.json", "/app/tools/plugin.mjs",
+                     "/app/test/helpers/battleHarness.js", "/app/docs/PLUGIN-GUIDE.md"]) {
+                   await fs.access(path);
+                 }
+                 await fs.mkdir("/app/plugins/.smoke-check");
+                 await fs.rmdir("/app/plugins/.smoke-check");'
               asset_file=$(find asset-bundle/public/assets -type f -print -quit)
               if [[ -n "$asset_file" ]]; then
                 asset_path=${asset_file#asset-bundle/public}
-                docker exec stronghold-protocol-smoke /usr/local/bin/deno eval --allow-net \
-                  'const path = Deno.args[0];
+                docker exec stronghold-protocol-smoke /usr/local/bin/node --input-type=module -e \
+                  'const path = process.argv[1];
                    const response = await fetch(`http://127.0.0.1:3000${path}`);
                    if (!response.ok) throw new Error(`Asset ${path}: HTTP ${response.status}`);' \
                   "$asset_path"
