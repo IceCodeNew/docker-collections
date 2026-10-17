@@ -6,7 +6,7 @@ FROM mirror.gcr.io/cloudflare/cloudflared:2026.10.0@sha256:9b49eed8f62806d5d45dd
 FROM scratch AS asset_bundle
 COPY --link --parents --from=src_dir ./data/assets.json /
 
-FROM dhi.io/node:24.22.0-debian13-dev@sha256:ce95ca4a32bd971675ad4cb2cd29a7005e5fd456eebb8f9c19faf5fe4b690a0b AS deps
+FROM dhi.io/node:24.22.0-debian13-dev@sha256:39f55475c45417de6a7be329834ce5b19bdda6c347ecd98e42b89d76bf4afa82 AS deps
 WORKDIR /app
 
 RUN --mount=type=bind,from=src_dir,source=./package.json,target=./package.json \
