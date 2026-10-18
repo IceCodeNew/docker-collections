@@ -22,14 +22,14 @@ RUN --mount=type=bind,target=/tests \
 FROM deps AS app
 COPY --link --parents --from=src_dir \
     ./package.json ./shared ./server ./data ./public \
-    ./docs/research ./docs/PLUGIN*.md ./docs/plugin-catalog.example.json \
+    ./docs/research ./docs/PLUGIN*.md ./docs/SKINS.md ./docs/plugin-catalog.example.json \
     ./schemas ./test/helpers/battleHarness.js ./tools/assets ./tools/plugin.mjs \
     ./LICENSE ./NOTICE.md ./THIRD-PARTY-NOTICES.md /app/
 COPY --link --from=src_dir ./plugins /app/plugin-resources
 RUN --mount=type=bind,from=src_dir,source=./tools/vendor.mjs,target=/app/tools/vendor.mjs \
     node tools/vendor.mjs \
     && node --check server/index.js \
-    && mkdir -p /app/plugins
+    && mkdir -p /app/plugins /app/.cache/gamedata/excel
 
 FROM dhi.io/node:24.22.0-debian13@sha256:c6ddacf90691f33734423b06682a63b27abeeafee294830455e91c79614ece8b AS runtime
 WORKDIR /app
@@ -41,6 +41,7 @@ COPY --link --parents --chmod=u=rwX,go=rX --from=app /./app /
 COPY --link --chmod=u=rwX,go=rX --from=asset_bundle / /app/
 COPY --link --chmod=u=rwX,go=rX ./entrypoint.ts ./healthcheck.ts /usr/local/lib/stronghold-protocol/
 COPY --link --chown=1993:1993 --from=app /app/plugins /app/plugins
+COPY --link --chown=1993:1993 --from=app /app/.cache /app/.cache
 
 USER 1993:1993
 EXPOSE 3000
