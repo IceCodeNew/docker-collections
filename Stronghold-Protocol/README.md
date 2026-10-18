@@ -63,7 +63,7 @@ run's artifacts list. This report remains available after a failed asset fetch;
 cancelled runs skip the upload. See the `Upload asset download report` step in
 the image workflow for its retention period. A missing report produces a warning.
 The Dockerfile itself never downloads art. The image includes four language packs
-and the v0.3.0 plugin templates, Schemas, and author tools. Official scenes and
+and the v0.3.1 plugin templates, Schemas, and author tools. Official scenes and
 combat effects still require game client extraction or a matching complete bundle.
 
 For a local image with art, prepare the bundle from a checkout of the release:
@@ -133,6 +133,11 @@ The health check requests the local `/healthz` endpoint; it does not check Cloud
 Mount a volume at `/app/plugins` to retain installed plugins and Studio settings
 across image updates. The templates stay in `/app/plugin-resources`. Script plugins
 remain disabled unless `SP_PLUGIN_SCRIPTS` is explicitly set.
+
+Forge imports that reference official operators outside the built-in roster can
+download official data tables on demand. The runtime gives UID `1993` write access
+to `/app/.cache/gamedata/excel` for these tables. Mount a separate volume at
+`/app/.cache` if the downloaded tables should survive image updates.
 
 Do not expose the game port directly to untrusted clients with trusted proxy headers.
 Read the upstream `TRUST_PROXY` guidance in [the deployment guide](https://github.com/sganggs/Stronghold-Protocol/blob/master/docs/DEPLOY.md).

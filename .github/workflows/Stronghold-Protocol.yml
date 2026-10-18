@@ -23,7 +23,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
-  STRONGHOLD_PROTOCOL_VERSION: v0.3.0
+  STRONGHOLD_PROTOCOL_VERSION: v0.3.1
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
@@ -341,12 +341,19 @@ jobs:
                  if (!plugins.ok) throw new Error(`Plugins: HTTP ${plugins.status}`);
                  const fs = await import("node:fs/promises");
                  for (const path of ["/app/plugin-resources/_template/content/plugin.json",
+                     "/app/plugin-resources/_template/cosmetic/media/sample.png",
+                     "/app/plugin-resources/_template/cosmetic/media/sample.ogg",
                      "/app/schemas/plugin.schema.json", "/app/tools/plugin.mjs",
-                     "/app/test/helpers/battleHarness.js", "/app/docs/PLUGIN-GUIDE.md"]) {
+                     "/app/test/helpers/battleHarness.js", "/app/docs/PLUGIN-GUIDE.md",
+                     "/app/docs/SKINS.md"]) {
                    await fs.access(path);
                  }
                  await fs.mkdir("/app/plugins/.smoke-check");
-                 await fs.rmdir("/app/plugins/.smoke-check");'
+                 await fs.rmdir("/app/plugins/.smoke-check");
+                 const cacheFile = "/app/.cache/gamedata/excel/.smoke-check";
+                 await fs.writeFile(cacheFile, "ok");
+                 await fs.unlink(cacheFile);'
+              docker exec stronghold-protocol-smoke node /app/tools/plugin.mjs list --json > /dev/null
               asset_file=$(find asset-bundle/public/assets -type f -print -quit)
               if [[ -n "$asset_file" ]]; then
                 asset_path=${asset_file#asset-bundle/public}
