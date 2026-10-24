@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM mirror.gcr.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS base
+FROM mirror.gcr.io/library/alpine:latest@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS base
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN apk update; apk --no-progress --no-cache add \
         bash ca-certificates catatonit curl dos2unix file git grep libarchive-tools parallel pcre2-dev sed \
