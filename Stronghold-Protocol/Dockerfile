@@ -28,6 +28,7 @@ COPY --link --parents --from=src_dir \
 COPY --link --from=src_dir ./plugins /app/plugin-resources
 RUN --mount=type=bind,from=src_dir,source=./tools/vendor.mjs,target=/app/tools/vendor.mjs \
     node tools/vendor.mjs \
+    && node --input-type=module -e "import { omitLlmFromRelease } from './server/match/llmRelease.js'; omitLlmFromRelease('/app');" \
     && node --check server/index.js \
     && mkdir -p /app/plugins /app/.cache/gamedata/excel
 

@@ -23,7 +23,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
-  STRONGHOLD_PROTOCOL_VERSION: v0.3.1
+  STRONGHOLD_PROTOCOL_VERSION: v0.3.2
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
@@ -69,7 +69,7 @@ jobs:
       - name: Resolve asset generator inputs
         id: asset_inputs
         run: |
-          echo 'hash=${{ hashFiles('collection/Stronghold-Protocol/asset_cache.py', 'upstream/package-lock.json', 'upstream/tools/fetch-assets.mjs', 'upstream/tools/assets/**', 'upstream/shared/constants.js', 'upstream/data/assets.json', 'upstream/data/backups.json', 'upstream/data/bosses.json', 'upstream/data/chess.json', 'upstream/data/enemies.json', 'upstream/data/tokens.json', 'upstream/docs/research/03-operators.json', 'upstream/docs/research/05-enemies.json', 'upstream/docs/research/05-maps.json', 'upstream/docs/research/07-assets.json') }}' >> "$GITHUB_OUTPUT"
+          echo 'hash=${{ hashFiles('collection/Stronghold-Protocol/asset_cache.py', 'upstream/package-lock.json', 'upstream/tools/fetch-assets.mjs', 'upstream/tools/assets/**', 'upstream/shared/constants.js', 'upstream/shared/versions.js', 'upstream/data/*.json', 'upstream/data/versions/**', 'upstream/docs/research/03-operators.json', 'upstream/docs/research/05-enemies.json', 'upstream/docs/research/05-maps.json', 'upstream/docs/research/07-assets.json') }}' >> "$GITHUB_OUTPUT"
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -339,15 +339,29 @@ jobs:
                  }
                  const plugins = await fetch("http://127.0.0.1:3000/plugins/index.json");
                  if (!plugins.ok) throw new Error(`Plugins: HTTP ${plugins.status}`);
+                 const health = await fetch("http://127.0.0.1:3000/healthz");
+                 if (!health.ok) throw new Error(`Health: HTTP ${health.status}`);
+                 const report = await health.json();
+                 const expectedVersions = ["act2autochess", "act2autochess@V2_1", "act1autochess", "act1autochess@V1_1"];
+                 if (report.versions?.default !== expectedVersions[0]
+                     || JSON.stringify(report.versions.enabled) !== JSON.stringify(expectedVersions)) {
+                   throw new Error(`Unexpected release or official versions: ${JSON.stringify(report)}`);
+                 }
                  const fs = await import("node:fs/promises");
                  for (const path of ["/app/plugin-resources/_template/content/plugin.json",
                      "/app/plugin-resources/_template/cosmetic/media/sample.png",
                      "/app/plugin-resources/_template/cosmetic/media/sample.ogg",
                      "/app/schemas/plugin.schema.json", "/app/tools/plugin.mjs",
                      "/app/test/helpers/battleHarness.js", "/app/docs/PLUGIN-GUIDE.md",
-                     "/app/docs/SKINS.md"]) {
+                     "/app/docs/SKINS.md", "/app/server/release-without-llm",
+                     "/app/data/versions/act2autochess-v2_1/chess.json",
+                     "/app/data/versions/act1autochess/chess.json",
+                     "/app/data/versions/act1autochess-v1_1/chess.json"]) {
                    await fs.access(path);
                  }
+                 try { await fs.access("/app/server/match/externalAI.js");
+                   throw new Error("Development-only external AI shipped in release image");
+                 } catch (error) { if (error.code !== "ENOENT") throw error; }
                  await fs.mkdir("/app/plugins/.smoke-check");
                  await fs.rmdir("/app/plugins/.smoke-check");
                  const cacheFile = "/app/.cache/gamedata/excel/.smoke-check";
