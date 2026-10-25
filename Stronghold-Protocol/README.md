@@ -63,7 +63,7 @@ run's artifacts list. This report remains available after a failed asset fetch;
 cancelled runs skip the upload. See the `Upload asset download report` step in
 the image workflow for its retention period. A missing report produces a warning.
 The Dockerfile itself never downloads art. The image includes four language packs
-and the v0.3.2 plugin templates, Schemas, and author tools. It also includes all
+and the v0.3.3 plugin templates, Schemas, and author tools. It also includes all
 four official version data sets and follows upstream release packaging by omitting
 development-only external AI integration. Official scenes and
 combat effects still require game client extraction or a matching complete bundle.
