@@ -67,7 +67,7 @@ jobs:
           retention-days: 1
 
   debian-multiarch:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - debian
     steps:
@@ -185,7 +185,7 @@ jobs:
           retention-days: 1
 
   graftcp-multiarch:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - graftcp
     steps:
@@ -274,7 +274,7 @@ jobs:
           retention-days: 1
 
   python-nonroot-multiarch:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - python-nonroot
     steps:

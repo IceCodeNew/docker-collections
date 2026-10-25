@@ -13,7 +13,7 @@ env:
 jobs:
   sync-fork:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 */12 * * *'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -35,7 +35,7 @@ jobs:
     concurrency:
       group: stronghold-protocol-dev-publish
       cancel-in-progress: false
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1

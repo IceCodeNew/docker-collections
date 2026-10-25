@@ -35,7 +35,7 @@ jobs:
       github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
        !startsWith(github.head_ref, 'renovate/'))
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       fetched: ${{ steps.fetch_assets.outcome == 'success' && '1' || '0' }}
       cache_keys: ${{ steps.asset_bundle.outputs.cache_keys }}
@@ -414,7 +414,7 @@ jobs:
 
   stronghold-protocol-multiarch:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: stronghold-protocol
     concurrency:
       group: stronghold-protocol-${{ inputs.source_sha != '' && 'dev-publish' || github.run_id }}

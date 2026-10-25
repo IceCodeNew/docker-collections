@@ -87,7 +87,7 @@ jobs:
           retention-days: 1
 
   markitdown-multiarch:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - markitdown
     steps:
