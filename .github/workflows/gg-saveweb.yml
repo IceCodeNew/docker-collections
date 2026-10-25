@@ -67,7 +67,7 @@ jobs:
           retention-days: 1
 
   base-multiarch:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - base
     steps:
@@ -162,7 +162,7 @@ jobs:
           retention-days: 1
 
   all-in-one-multiarch:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       - all-in-one
     steps:
