@@ -15,7 +15,7 @@ on:
 env:
   IPROUTE2_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/iproute2
   # renovate: datasource=github-tags depName=iproute2 packageName=iproute2/iproute2
-  IPROUTE2_VERSION: v7.2.0
+  IPROUTE2_VERSION: v7.3.0
 
 jobs:
   iproute2:
