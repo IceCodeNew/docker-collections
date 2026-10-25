@@ -32,7 +32,7 @@ RUN --mount=type=bind,from=src_dir,source=./tools/vendor.mjs,target=/app/tools/v
     && node --check server/index.js \
     && mkdir -p /app/plugins /app/.cache/gamedata/excel
 
-FROM dhi.io/node:24.22.0-debian13@sha256:c6ddacf90691f33734423b06682a63b27abeeafee294830455e91c79614ece8b AS runtime
+FROM dhi.io/node:24.22.0-debian13@sha256:4484fb16cd015b48f8479ed0772656a19906a4a326c1da21184e0af8f3f79ba6 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production SP_PLUGIN_RESOURCES=/app/plugin-resources
 COPY --link --from=catatonit /usr/bin/catatonit /usr/bin/catatonit
