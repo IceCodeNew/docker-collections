@@ -9,7 +9,7 @@ RUN curl -sSL "https://github.com/skeeto/endlessh/archive/refs/heads/master.tar.
 
 
 FROM mirror.gcr.io/icecodexi/bash-toybox:latest@sha256:e9328168e7241e8d362094b9246d1843f901ff0106b6b7c8df42c54c7f2c9573 AS catatonit
-FROM gcr.io/distroless/static:nonroot@sha256:18f4cc26c9ffa7f20a359298be7deadac5c607c8e03a02b8119f1a5fc2f82c99
+FROM gcr.io/distroless/static:nonroot@sha256:25ac8f0c3b2334a9eb05452266bd4697864a8c8ef0ef71e5e6480d7f92868329
 COPY --link --from=build-env --chmod=755 /endlessh/endlessh /usr/local/bin/
 COPY --link --from=catatonit             /usr/bin/catatonit /usr/bin/
 EXPOSE 2222/tcp
