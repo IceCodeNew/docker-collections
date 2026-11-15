@@ -22,8 +22,8 @@ RUN --mount=type=bind,target=/tests \
 FROM deps AS app
 COPY --link --parents --from=src_dir \
     ./package.json ./shared ./server ./data ./public \
-    ./docs/research ./docs/PLUGIN*.md ./docs/SKINS.md ./docs/plugin-catalog.example.json \
-    ./schemas ./test/helpers/battleHarness.js ./tools/assets ./tools/plugin.mjs \
+    ./docs/research ./docs/PLUGIN*.md ./docs/SKINS.md ./docs/THEME-GUIDE.md ./docs/THEMES.md ./docs/plugin-catalog.example.json \
+    ./schemas ./test/helpers/battleHarness.js ./tools/assets ./tools/plugin.mjs ./tools/theme-template.mjs \
     ./LICENSE ./NOTICE.md ./THIRD-PARTY-NOTICES.md /app/
 COPY --link --from=src_dir ./plugins /app/plugin-resources
 RUN --mount=type=bind,from=src_dir,source=./tools/vendor.mjs,target=/app/tools/vendor.mjs \
