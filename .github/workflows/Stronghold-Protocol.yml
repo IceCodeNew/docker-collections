@@ -23,7 +23,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=Stronghold-Protocol packageName=sganggs/Stronghold-Protocol
-  STRONGHOLD_PROTOCOL_VERSION: v0.3.3
+  STRONGHOLD_PROTOCOL_VERSION: v0.4.0
   REGISTRY_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/stronghold-protocol
 
 jobs:
@@ -342,8 +342,8 @@ jobs:
                  const health = await fetch("http://127.0.0.1:3000/healthz");
                  if (!health.ok) throw new Error(`Health: HTTP ${health.status}`);
                  const report = await health.json();
-                 const expectedVersions = ["act2autochess", "act2autochess@V2_1", "act1autochess", "act1autochess@V1_1"];
-                 if (report.versions?.default !== expectedVersions[0]
+                 const expectedVersions = ["act2autochess", "act2autochess@V2_1", "act1autochess", "act1autochess@V1_1", "act3autochess@V3_1"];
+                 if (report.versions?.default !== "act3autochess@V3_1"
                      || JSON.stringify(report.versions.enabled) !== JSON.stringify(expectedVersions)) {
                    throw new Error(`Unexpected release or official versions: ${JSON.stringify(report)}`);
                  }
@@ -356,7 +356,10 @@ jobs:
                      "/app/docs/SKINS.md", "/app/server/release-without-llm",
                      "/app/data/versions/act2autochess-v2_1/chess.json",
                      "/app/data/versions/act1autochess/chess.json",
-                     "/app/data/versions/act1autochess-v1_1/chess.json"]) {
+                     "/app/data/versions/act1autochess-v1_1/chess.json",
+                     "/app/data/versions/act3autochess-v3_1/chess.json",
+                     "/app/docs/THEME-GUIDE.md", "/app/docs/THEMES.md",
+                     "/app/tools/theme-template.mjs"]) {
                    await fs.access(path);
                  }
                  try { await fs.access("/app/server/match/externalAI.js");
