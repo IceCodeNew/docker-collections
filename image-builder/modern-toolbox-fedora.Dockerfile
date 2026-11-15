@@ -1,6 +1,6 @@
 # syntax=mirror.gcr.io/docker/dockerfile:1.27.1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-FROM quay.io/fedora/fedora-minimal:latest@sha256:dd6a46fe78c47bcf9acd9f49d0d0ac7f527ed245165851ba8056b0f997229521 AS base
+FROM quay.io/fedora/fedora-minimal:latest@sha256:d27ba05902c75809150ab49f67efa61ae55212d9b99c52f6c22f7b0a97f598df AS base
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # RUN dnf install -y --setopt=install_weak_deps=False --repo=fedora --repo=updates 'dnf-command(download)' \
