@@ -12,7 +12,7 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=tailscale packageName=tailscale/tailscale
-  TAILSCALE_VERSION: v1.104.6
+  TAILSCALE_VERSION: v1.104.7
 
 jobs:
   publish:
@@ -25,7 +25,7 @@ jobs:
           repository: "tailscale/tailscale"
           ref: "${{ env.TAILSCALE_VERSION }}"
 
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           check-latest: true
           cache: false
