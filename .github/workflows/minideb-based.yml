@@ -14,7 +14,7 @@ on:
 
 env:
   # renovate: datasource=github-tags depName=graftcp packageName=hmgle/graftcp
-  GRAFTCP_VERSION: v0.8.3
+  GRAFTCP_VERSION: v0.9.0
 
 jobs:
   debian:
@@ -129,7 +129,7 @@ jobs:
           persist-credentials: false
           repository: 'hmgle/graftcp'
           # renovate: datasource=github-tags depName=graftcp packageName=hmgle/graftcp
-          ref: 'v0.8.3'
+          ref: 'v0.9.0'
           path: 'graftcp-src'
 
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
